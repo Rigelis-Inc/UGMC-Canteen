@@ -55,6 +55,7 @@ export default function StoreDetailPage() {
 
   if (loading) {
     return (
+      <Layout>
         <div className="animate-pulse space-y-6">
           <div className="h-8 bg-gray-200 rounded w-48"></div>
           <div className="grid grid-cols-4 gap-4">
@@ -64,6 +65,7 @@ export default function StoreDetailPage() {
           </div>
           <div className="h-64 bg-gray-200 rounded-xl"></div>
         </div>
+      </Layout>
     );
   }
 
