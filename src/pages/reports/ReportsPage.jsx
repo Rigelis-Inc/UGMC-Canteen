@@ -203,7 +203,7 @@ export default function ReportsPage() {
 
   const typeConfig = {
     RECEIVE: { bg: "bg-green-100", text: "text-green-700", dot: "bg-green-500", icon: ArrowDownToLine },
-    ISSUE: { bg: "bg-blue-100", text: "text-blue-700", dot: "bg-blue-500", icon: ArrowUpToLine },
+    ISSUE: { bg: "bg-primary-100", text: "text-primary-700", dot: "bg-primary-500", icon: ArrowUpToLine },
     TRANSFER: { bg: "bg-purple-100", text: "text-purple-700", dot: "bg-purple-500" },
     ADJUSTMENT: { bg: "bg-amber-100", text: "text-amber-700", dot: "bg-amber-500" },
     DAMAGE: { bg: "red-100", text: "text-red-700", dot: "bg-red-500" },
@@ -228,7 +228,7 @@ export default function ReportsPage() {
               <select
                 value={reportType}
                 onChange={(e) => setReportType(e.target.value)}
-                className="px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-gray-50/50"
+                className="px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50"
               >
                 {REPORT_TYPES.map((r) => (
                   <option key={r.id} value={r.id}>{r.label}</option>
@@ -240,7 +240,7 @@ export default function ReportsPage() {
               <select
                 value={filterStore}
                 onChange={(e) => setFilterStore(e.target.value)}
-                className="px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-gray-50/50"
+                className="px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50"
               >
                 <option value="">All Stores</option>
                 {stores.map((s) => (
@@ -258,7 +258,7 @@ export default function ReportsPage() {
                       type="date"
                       value={dateFrom}
                       onChange={(e) => setDateFrom(e.target.value)}
-                      className="px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-gray-50/50"
+                      className="px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50"
                     />
                   </div>
                 </div>
@@ -270,7 +270,7 @@ export default function ReportsPage() {
                       type="date"
                       value={dateTo}
                       onChange={(e) => setDateTo(e.target.value)}
-                      className="px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-gray-50/50"
+                      className="px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50"
                     />
                   </div>
                 </div>
@@ -279,7 +279,7 @@ export default function ReportsPage() {
             <button
               onClick={generateReport}
               disabled={generating}
-              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-sm font-semibold disabled:opacity-50 transition-colors shadow-sm"
+              className="flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-5 py-2.5 rounded-lg text-sm font-semibold disabled:opacity-50 transition-colors shadow-sm"
             >
               {generating ? <Loader2 size={16} className="animate-spin" /> : <FileText size={16} />}
               {generating ? "Generating..." : "Generate Report"}
@@ -288,7 +288,7 @@ export default function ReportsPage() {
         </div>
 
         {summary && (
-          <div className="px-6 py-4 border-t border-gray-100 bg-gradient-to-r from-slate-50 to-blue-50/50">
+          <div className="px-6 py-4 border-t border-gray-100 bg-gradient-to-r from-slate-50 to-primary-50/50">
             <h3 className="text-sm font-semibold text-gray-700 mb-3">Summary</h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
               {summary.totalMovements !== undefined && (
@@ -306,7 +306,7 @@ export default function ReportsPage() {
               {summary.totalIssued !== undefined && (
                 <div>
                   <p className="text-xs text-gray-500">Qty Issued</p>
-                  <p className="text-lg font-bold text-blue-600">{summary.totalIssued.toLocaleString()}</p>
+                  <p className="text-lg font-bold text-primary-600">{summary.totalIssued.toLocaleString()}</p>
                 </div>
               )}
               {summary.totalValueIn !== undefined && (
@@ -318,7 +318,7 @@ export default function ReportsPage() {
               {summary.totalValueOut !== undefined && (
                 <div>
                   <p className="text-xs text-gray-500">Value Out</p>
-                  <p className="text-lg font-bold text-blue-600">GH₵ {summary.totalValueOut.toLocaleString("en-GH", { minimumFractionDigits: 2 })}</p>
+                  <p className="text-lg font-bold text-primary-600">GH₵ {summary.totalValueOut.toLocaleString("en-GH", { minimumFractionDigits: 2 })}</p>
                 </div>
               )}
               {summary.netValue !== undefined && (

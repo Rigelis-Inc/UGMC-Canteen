@@ -96,7 +96,7 @@ export default function StoreDetailPage() {
 
   const typeConfig = {
     RECEIVE: { bg: "bg-green-100", text: "text-green-700", dot: "bg-green-500" },
-    ISSUE: { bg: "bg-blue-100", text: "text-blue-700", dot: "bg-blue-500" },
+    ISSUE: { bg: "bg-primary-100", text: "text-primary-700", dot: "bg-primary-500" },
     TRANSFER: { bg: "bg-purple-100", text: "text-purple-700", dot: "bg-purple-500" },
     ADJUSTMENT: { bg: "bg-amber-100", text: "text-amber-700", dot: "bg-amber-500" },
     DAMAGE: { bg: "bg-red-100", text: "text-red-700", dot: "bg-red-500" },
@@ -126,8 +126,8 @@ export default function StoreDetailPage() {
         <div className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-sm hover:border-gray-300 transition-all duration-200">
           <div className="flex items-start justify-between mb-2">
             <p className="text-xs font-medium text-gray-500">Total Products</p>
-            <div className="p-1.5 rounded-md bg-blue-50">
-              <Package size={14} className="text-blue-600" />
+            <div className="p-1.5 rounded-md bg-primary-50">
+              <Package size={14} className="text-primary-600" />
             </div>
           </div>
           <p className="text-xl font-bold text-gray-900 tracking-tight leading-none">{products.length}</p>
@@ -170,7 +170,7 @@ export default function StoreDetailPage() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
                   activeTab === tab.id
-                    ? "border-blue-600 text-blue-600"
+                    ? "border-primary-600 text-primary-600"
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                 }`}
               >
@@ -222,7 +222,7 @@ export default function StoreDetailPage() {
                 </button>
                 <button
                   onClick={() => setShowAddModal(true)}
-                  className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-2 bg-primary-600 text-white rounded-lg text-sm font-semibold hover:bg-primary-700 transition-colors"
                 >
                   <Plus size={14} />
                   Add Product
@@ -290,7 +290,7 @@ export default function StoreDetailPage() {
               </div>
             ) : (
               <>
-                <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-slate-50 to-blue-50/50">
+                <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-slate-50 to-primary-50/50">
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                     <div>
                       <p className="text-xs text-gray-500">Total Movements</p>
@@ -304,7 +304,7 @@ export default function StoreDetailPage() {
                     </div>
                     <div>
                       <p className="text-xs text-gray-500">Qty Issued</p>
-                      <p className="text-lg font-bold text-blue-600">
+                      <p className="text-lg font-bold text-primary-600">
                         -{recentMovements.filter((m) => m.type === "ISSUE").reduce((s, m) => s + (m.quantity || 0), 0)}
                       </p>
                     </div>
@@ -490,7 +490,7 @@ function AddProductModal({ store, categories, onClose }) {
               <select
                 value={formData.categoryId}
                 onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-gray-50/50"
+                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50"
               >
                 <option value="">Select category</option>
                 {categories.map((c) => (
@@ -503,7 +503,7 @@ function AddProductModal({ store, categories, onClose }) {
               <select
                 value={formData.unit}
                 onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
-                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-gray-50/50"
+                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50"
                 required
               >
                 <option value="">Select unit</option>
@@ -520,7 +520,7 @@ function AddProductModal({ store, categories, onClose }) {
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-gray-50/50"
+              className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50"
               placeholder="e.g. Examination Gloves"
               required
             />
@@ -534,7 +534,7 @@ function AddProductModal({ store, categories, onClose }) {
                 min="0"
                 value={formData.quantity}
                 onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
-                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-gray-50/50"
+                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50"
                 required
               />
             </div>
@@ -545,7 +545,7 @@ function AddProductModal({ store, categories, onClose }) {
                 min="0"
                 value={formData.reorderLevel}
                 onChange={(e) => setFormData({ ...formData, reorderLevel: e.target.value })}
-                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-gray-50/50"
+                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50"
               />
             </div>
           </div>
@@ -559,7 +559,7 @@ function AddProductModal({ store, categories, onClose }) {
                 step="0.01"
                 value={formData.unitCost}
                 onChange={(e) => setFormData({ ...formData, unitCost: e.target.value })}
-                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-gray-50/50"
+                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50"
               />
             </div>
             <div>
@@ -568,7 +568,7 @@ function AddProductModal({ store, categories, onClose }) {
                 type="text"
                 value={formData.batchNumber}
                 onChange={(e) => setFormData({ ...formData, batchNumber: e.target.value })}
-                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-gray-50/50"
+                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50"
                 placeholder="Optional"
               />
             </div>
@@ -585,7 +585,7 @@ function AddProductModal({ store, categories, onClose }) {
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg text-sm font-semibold hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+              className="flex-1 px-4 py-2.5 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-lg text-sm font-semibold hover:from-primary-700 hover:to-primary-800 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
             >
               {loading ? (
                 <>
@@ -775,11 +775,11 @@ function UploadProductsModal({ store, categories, onClose }) {
           {step === "upload" && (
             <div className="p-6 space-y-6">
               <div
-                className="border-2 border-dashed border-gray-200 rounded-xl p-10 text-center hover:border-blue-300 hover:bg-blue-50/30 transition-colors cursor-pointer"
+                className="border-2 border-dashed border-gray-200 rounded-xl p-10 text-center hover:border-primary-300 hover:bg-primary-50/30 transition-colors cursor-pointer"
                 onClick={() => document.getElementById("fileInput").click()}
               >
-                <div className="w-14 h-14 rounded-xl bg-blue-50 flex items-center justify-center mx-auto mb-4">
-                  <Upload size={24} className="text-blue-500" />
+                <div className="w-14 h-14 rounded-xl bg-primary-50 flex items-center justify-center mx-auto mb-4">
+                  <Upload size={24} className="text-primary-500" />
                 </div>
                 <p className="text-sm font-medium text-gray-900">
                   {file ? file.name : "Click to select a file"}
@@ -794,23 +794,23 @@ function UploadProductsModal({ store, categories, onClose }) {
                 />
               </div>
 
-              <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
-                <p className="text-sm font-medium text-blue-800 mb-2">Required columns:</p>
+              <div className="bg-primary-50 border border-primary-100 rounded-xl p-4">
+                <p className="text-sm font-medium text-primary-800 mb-2">Required columns:</p>
                 <div className="flex flex-wrap gap-1.5">
                   {requiredColumns.map((col) => (
-                    <span key={col} className="px-2 py-1 bg-blue-100 text-blue-700 rounded-md text-xs font-medium">
+                    <span key={col} className="px-2 py-1 bg-primary-100 text-primary-700 rounded-md text-xs font-medium">
                       {col}
                     </span>
                   ))}
                 </div>
-                <p className="text-xs text-blue-600 mt-3">
+                <p className="text-xs text-primary-600 mt-3">
                   Optional: Reorder Level, Unit Cost, Batch Number, Expiry Date, Supplier Name
                 </p>
               </div>
 
               <button
                 onClick={downloadTemplate}
-                className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors"
+                className="flex items-center gap-2 text-sm text-primary-600 hover:text-primary-700 font-medium transition-colors"
               >
                 <Download size={14} />
                 Download template file
@@ -891,7 +891,7 @@ function UploadProductsModal({ store, categories, onClose }) {
             <button
               onClick={handleImport}
               disabled={loading || preview.length === 0}
-              className="flex-1 px-4 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+              className="flex-1 px-4 py-2.5 bg-primary-600 text-white rounded-lg text-sm font-semibold hover:bg-primary-700 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
             >
               {loading ? (
                 <>

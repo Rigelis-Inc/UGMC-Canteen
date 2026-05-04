@@ -24,10 +24,10 @@ export default function AuditLogsPage() {
   }, []);
 
   const actionColors = {
-    "User logged in": "bg-blue-100 text-blue-700",
+    "User logged in": "bg-primary-100 text-primary-700",
     "Product added": "bg-green-100 text-green-700",
     "Stock received": "bg-emerald-100 text-emerald-700",
-    "Stock issued": "bg-blue-100 text-blue-700",
+    "Stock issued": "bg-primary-100 text-primary-700",
     "Stock adjusted": "bg-amber-100 text-amber-700",
     "User created": "bg-violet-100 text-violet-700",
   };
@@ -59,7 +59,7 @@ export default function AuditLogsPage() {
               <div key={log.id} className="px-6 py-4 hover:bg-gray-50/50 transition-colors">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className={`w-2 h-2 rounded-full ${log.action?.includes("received") ? "bg-green-500" : log.action?.includes("issued") ? "bg-blue-500" : "bg-gray-400"}`}></div>
+                    <div className={`w-2 h-2 rounded-full ${log.action?.includes("received") ? "bg-green-500" : log.action?.includes("issued") ? "bg-primary-500" : "bg-gray-400"}`}></div>
                     <div>
                       <p className="text-sm font-medium text-gray-900">{log.action}</p>
                       <p className="text-xs text-gray-500 mt-0.5">

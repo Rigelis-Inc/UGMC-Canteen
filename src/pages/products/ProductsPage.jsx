@@ -95,7 +95,7 @@ export default function ProductsPage() {
           </button>
           <button
             onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors shadow-sm"
+            className="flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors shadow-sm"
           >
             <Plus size={15} />
             Add Product
@@ -113,7 +113,7 @@ export default function ProductsPage() {
                 placeholder="Search products..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-gray-50/50"
+                className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50"
               />
             </div>
             <div className="flex items-center gap-2 text-gray-400 px-2">
@@ -122,7 +122,7 @@ export default function ProductsPage() {
             <select
               value={filterStore}
               onChange={(e) => setFilterStore(e.target.value)}
-              className="px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-gray-50/50"
+              className="px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50"
             >
               <option value="">All Stores</option>
               {stores.map((s) => (
@@ -132,7 +132,7 @@ export default function ProductsPage() {
             <select
               value={filterCategory}
               onChange={(e) => setFilterCategory(e.target.value)}
-              className="px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-gray-50/50"
+              className="px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50"
             >
               <option value="">All Categories</option>
               {categories.map((c) => (
@@ -142,7 +142,7 @@ export default function ProductsPage() {
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-gray-50/50"
+              className="px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50"
             >
               <option value="">All Status</option>
               <option value="in">In Stock</option>
@@ -327,7 +327,7 @@ function AddProductModal({ stores, categories, onClose }) {
             <select
               value={formData.storeId}
               onChange={(e) => setFormData({ ...formData, storeId: e.target.value })}
-              className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-gray-50/50"
+              className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50"
               required
             >
               <option value="">Select store</option>
@@ -343,7 +343,7 @@ function AddProductModal({ stores, categories, onClose }) {
               <select
                 value={formData.categoryId}
                 onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-gray-50/50"
+                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50"
               >
                 <option value="">Select category</option>
                 {categories.map((c) => (
@@ -356,7 +356,7 @@ function AddProductModal({ stores, categories, onClose }) {
               <select
                 value={formData.unit}
                 onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
-                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-gray-50/50"
+                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50"
                 required
               >
                 <option value="">Select unit</option>
@@ -373,7 +373,7 @@ function AddProductModal({ stores, categories, onClose }) {
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-gray-50/50"
+              className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50"
               placeholder="e.g. Examination Gloves"
               required
             />
@@ -387,7 +387,7 @@ function AddProductModal({ stores, categories, onClose }) {
                 min="0"
                 value={formData.quantity}
                 onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
-                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-gray-50/50"
+                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50"
                 required
               />
             </div>
@@ -398,7 +398,7 @@ function AddProductModal({ stores, categories, onClose }) {
                 min="0"
                 value={formData.reorderLevel}
                 onChange={(e) => setFormData({ ...formData, reorderLevel: e.target.value })}
-                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-gray-50/50"
+                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50"
               />
             </div>
           </div>
@@ -412,7 +412,7 @@ function AddProductModal({ stores, categories, onClose }) {
                 step="0.01"
                 value={formData.unitCost}
                 onChange={(e) => setFormData({ ...formData, unitCost: e.target.value })}
-                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-gray-50/50"
+                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50"
               />
             </div>
             <div>
@@ -421,7 +421,7 @@ function AddProductModal({ stores, categories, onClose }) {
                 type="text"
                 value={formData.batchNumber}
                 onChange={(e) => setFormData({ ...formData, batchNumber: e.target.value })}
-                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-gray-50/50"
+                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50"
                 placeholder="Optional"
               />
             </div>
@@ -438,7 +438,7 @@ function AddProductModal({ stores, categories, onClose }) {
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg text-sm font-semibold hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+              className="flex-1 px-4 py-2.5 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-lg text-sm font-semibold hover:from-primary-700 hover:to-primary-800 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
             >
               {loading ? (
                 <>
@@ -642,7 +642,7 @@ function UploadProductsModal({ stores, categories, onClose }) {
                 <select
                   value={storeId}
                   onChange={(e) => setStoreId(e.target.value)}
-                  className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-gray-50/50"
+                  className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50"
                 >
                   <option value="">Select store</option>
                   {stores.map((s) => (
@@ -652,11 +652,11 @@ function UploadProductsModal({ stores, categories, onClose }) {
               </div>
 
               <div
-                className="border-2 border-dashed border-gray-200 rounded-xl p-10 text-center hover:border-blue-300 hover:bg-blue-50/30 transition-colors cursor-pointer"
+                className="border-2 border-dashed border-gray-200 rounded-xl p-10 text-center hover:border-primary-300 hover:bg-primary-50/30 transition-colors cursor-pointer"
                 onClick={() => document.getElementById("fileInput").click()}
               >
-                <div className="w-14 h-14 rounded-xl bg-blue-50 flex items-center justify-center mx-auto mb-4">
-                  <Upload size={24} className="text-blue-500" />
+                <div className="w-14 h-14 rounded-xl bg-primary-50 flex items-center justify-center mx-auto mb-4">
+                  <Upload size={24} className="text-primary-500" />
                 </div>
                 <p className="text-sm font-medium text-gray-900">
                   {file ? file.name : "Click to select a file"}
@@ -671,23 +671,23 @@ function UploadProductsModal({ stores, categories, onClose }) {
                 />
               </div>
 
-              <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
-                <p className="text-sm font-medium text-blue-800 mb-2">Required columns:</p>
+              <div className="bg-primary-50 border border-primary-100 rounded-xl p-4">
+                <p className="text-sm font-medium text-primary-800 mb-2">Required columns:</p>
                 <div className="flex flex-wrap gap-1.5">
                   {requiredColumns.map((col) => (
-                    <span key={col} className="px-2 py-1 bg-blue-100 text-blue-700 rounded-md text-xs font-medium">
+                    <span key={col} className="px-2 py-1 bg-primary-100 text-primary-700 rounded-md text-xs font-medium">
                       {col}
                     </span>
                   ))}
                 </div>
-                <p className="text-xs text-blue-600 mt-3">
+                <p className="text-xs text-primary-600 mt-3">
                   Optional: Reorder Level, Unit Cost, Batch Number, Expiry Date, Supplier Name
                 </p>
               </div>
 
               <button
                 onClick={downloadTemplate}
-                className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors"
+                className="flex items-center gap-2 text-sm text-primary-600 hover:text-primary-700 font-medium transition-colors"
               >
                 <Download size={14} />
                 Download template file
@@ -768,7 +768,7 @@ function UploadProductsModal({ stores, categories, onClose }) {
             <button
               onClick={handleImport}
               disabled={loading || preview.length === 0}
-              className="flex-1 px-4 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+              className="flex-1 px-4 py-2.5 bg-primary-600 text-white rounded-lg text-sm font-semibold hover:bg-primary-700 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
             >
               {loading ? (
                 <>

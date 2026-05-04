@@ -201,7 +201,7 @@ export default function IssueStockPage() {
         {/* Left Panel - Configuration */}
         <div className="lg:col-span-1 space-y-4">
           <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-            <div className="px-4 py-3 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50/50">
+            <div className="px-4 py-3 border-b border-gray-100 bg-gradient-to-r from-primary-50 to-indigo-50/50">
               <h2 className="text-sm font-semibold text-gray-900">Configuration</h2>
             </div>
             <div className="p-4 space-y-4">
@@ -210,7 +210,7 @@ export default function IssueStockPage() {
                 <select
                   value={formData.storeId}
                   onChange={(e) => { setFormData({ ...formData, storeId: e.target.value }); setItems([]); }}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-gray-50/50"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50"
                 >
                   <option value="">Select store</option>
                   {stores.map((s) => (
@@ -222,7 +222,7 @@ export default function IssueStockPage() {
               <div ref={recipientRef}>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Recipient <span className="text-red-500">*</span></label>
                 {formData.recipientId ? (
-                  <div className="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg bg-blue-50/50 text-sm">
+                  <div className="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg bg-primary-50/50 text-sm">
                     <span className="font-medium text-gray-900 flex-1 truncate">{selectedRecipient?.name}</span>
                     <button
                       type="button"
@@ -241,7 +241,7 @@ export default function IssueStockPage() {
                       onChange={(e) => { setRecipientSearch(e.target.value); setRecipientDropdownOpen(true); }}
                       onFocus={() => setRecipientDropdownOpen(true)}
                       placeholder="Search recipients..."
-                      className="w-full pl-9 pr-9 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-gray-50/50"
+                      className="w-full pl-9 pr-9 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50"
                     />
                     <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                     {recipientDropdownOpen && (
@@ -254,7 +254,7 @@ export default function IssueStockPage() {
                               key={r.id}
                               type="button"
                               onClick={() => { setFormData({ ...formData, recipientId: r.id }); setRecipientSearch(""); setRecipientDropdownOpen(false); }}
-                              className="w-full px-3 py-2 text-left hover:bg-blue-50 transition-colors flex items-center justify-between border-b border-gray-50 last:border-0"
+                              className="w-full px-3 py-2 text-left hover:bg-primary-50 transition-colors flex items-center justify-between border-b border-gray-50 last:border-0"
                             >
                               <span className="font-medium text-gray-900 text-sm">{r.name}</span>
                               <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">{r.type || ""}</span>
@@ -273,7 +273,7 @@ export default function IssueStockPage() {
                   type="text"
                   value={formData.referenceNumber}
                   onChange={(e) => setFormData({ ...formData, referenceNumber: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-gray-50/50"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50"
                 />
               </div>
 
@@ -283,7 +283,7 @@ export default function IssueStockPage() {
                   value={formData.note}
                   onChange={(e) => setFormData({ ...formData, note: e.target.value })}
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-gray-50/50 resize-none"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50 resize-none"
                   placeholder="Purpose for issuing stock"
                 />
               </div>
@@ -294,7 +294,7 @@ export default function IssueStockPage() {
             type="button"
             onClick={handleSubmit}
             disabled={loading || !allValid}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm flex items-center justify-center gap-2"
+            className="w-full bg-primary-600 hover:bg-primary-700 text-white py-3 rounded-xl text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm flex items-center justify-center gap-2"
           >
             {loading ? (
               <>
@@ -313,7 +313,7 @@ export default function IssueStockPage() {
         {/* Right Panel - Products */}
         <div className="lg:col-span-2">
           <div className="bg-white rounded-xl border border-gray-200 overflow-hidden flex flex-col" style={{ minHeight: "calc(100vh - 200px)" }}>
-            <div className="px-4 py-3 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50/50 flex items-center justify-between">
+            <div className="px-4 py-3 border-b border-gray-100 bg-gradient-to-r from-primary-50 to-indigo-50/50 flex items-center justify-between">
               <h2 className="text-sm font-semibold text-gray-900">Products ({items.length})</h2>
               {items.length > 0 && (
                 <button
@@ -336,7 +336,7 @@ export default function IssueStockPage() {
                   onFocus={() => formData.storeId && setProductDropdownOpen(true)}
                   placeholder={formData.storeId ? "Search and click to add products..." : "Select a store first"}
                   disabled={!formData.storeId}
-                  className="w-full pl-9 pr-9 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-gray-50/50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full pl-9 pr-9 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50 disabled:opacity-50 disabled:cursor-not-allowed"
                 />
                 <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                 {productDropdownOpen && formData.storeId && (
@@ -351,7 +351,7 @@ export default function IssueStockPage() {
                           key={p.id}
                           type="button"
                           onClick={() => handleAddProduct(p)}
-                          className="w-full px-4 py-2.5 text-left hover:bg-blue-50 transition-colors flex items-center justify-between border-b border-gray-50 last:border-0"
+                          className="w-full px-4 py-2.5 text-left hover:bg-primary-50 transition-colors flex items-center justify-between border-b border-gray-50 last:border-0"
                         >
                           <span className="font-medium text-gray-900 text-sm">{p.productName}</span>
                           <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">{p.quantityOnHand} {p.unit}</span>
@@ -376,8 +376,8 @@ export default function IssueStockPage() {
                 <div className="space-y-2">
                   {items.map((item, index) => (
                     <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100 hover:border-gray-200 transition-colors">
-                      <div className="p-1.5 rounded-md bg-blue-100 flex-shrink-0">
-                        <Package size={14} className="text-blue-600" />
+                      <div className="p-1.5 rounded-md bg-primary-100 flex-shrink-0">
+                        <Package size={14} className="text-primary-600" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-gray-900 truncate">{item.productName}</p>
@@ -397,7 +397,7 @@ export default function IssueStockPage() {
                           max={item.maxQty}
                           value={item.quantity}
                           onChange={(e) => handleItemChange(index, "quantity", e.target.value)}
-                          className="w-16 px-2 py-1.5 border border-gray-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white"
+                          className="w-16 px-2 py-1.5 border border-gray-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-white"
                         />
                         <button
                           type="button"
