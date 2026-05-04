@@ -344,15 +344,15 @@ export default function Sidebar({ collapsed, onToggle }) {
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn">
           <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden">
             <div className="px-6 pt-8 pb-4 text-center">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-red-50 to-red-100 flex items-center justify-center mx-auto mb-5 shadow-inner">
-                <LogOut size={24} className="text-red-500" />
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center mx-auto mb-5 shadow-inner">
+                <LogOut size={24} className="text-primary-500" />
               </div>
               <h3 className="text-lg font-semibold text-gray-900">Sign out</h3>
               <p className="text-sm text-gray-500 mt-1.5 leading-relaxed">Are you sure you want to sign out? You will need to log in again to access the system.</p>
             </div>
             <div className="flex gap-3 p-6 pt-2">
               <button onClick={() => setShowLogoutModal(false)} className="flex-1 px-4 py-3 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors">Cancel</button>
-              <button onClick={confirmLogout} className="flex-1 px-4 py-3 text-sm font-semibold text-white bg-gradient-to-r from-red-600 to-red-600 hover:from-red-700 hover:to-red-700 rounded-xl transition-all shadow-lg shadow-red-600/25">Sign out</button>
+              <button onClick={confirmLogout} className="flex-1 px-4 py-3 text-sm font-semibold text-white bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-700 hover:to-primary-600 rounded-xl transition-all shadow-lg shadow-primary-600/25">Sign out</button>
             </div>
           </div>
         </div>
