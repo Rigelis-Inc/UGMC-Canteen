@@ -1,12 +1,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
+import { onAuthStateChanged, signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "../../config/firebase";
-import { useAuth } from "../../contexts/AuthContext";
 import { Mail, Lock, AlertCircle, CheckCircle2, Loader2, Eye, EyeOff, ArrowLeft } from "lucide-react";
 
 export default function LoginPage() {
-  const { currentUser } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -17,10 +15,20 @@ export default function LoginPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (currentUser) {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        navigate("/dashboard", { replace: true });
+      }
+    });
+
+    return unsubscribe;
+  }, [navigate]);
+
+  useEffect(() => {
+    if (auth.currentUser) {
       navigate("/dashboard", { replace: true });
     }
-  }, [currentUser, navigate]);
+  }, [navigate]);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -28,6 +36,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
+      navigate("/dashboard", { replace: true });
     } catch (err) {
       if (err.code === "auth/user-not-found" || err.code === "auth/invalid-credential") {
         setError("Invalid email or password. Please try again.");
