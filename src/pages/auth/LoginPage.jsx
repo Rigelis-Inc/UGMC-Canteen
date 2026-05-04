@@ -2,9 +2,11 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { onAuthStateChanged, signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "../../config/firebase";
+import { useAuth } from "../../contexts/AuthContext";
 import { Mail, Lock, AlertCircle, CheckCircle2, Loader2, Eye, EyeOff, ArrowLeft } from "lucide-react";
 
 export default function LoginPage() {
+  const { loading: authLoading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -29,6 +31,17 @@ export default function LoginPage() {
       navigate("/dashboard", { replace: true });
     }
   }, [navigate]);
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+          <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-blue-600" />
+          <span className="text-sm font-medium text-slate-600">Loading sign-in...</span>
+        </div>
+      </div>
+    );
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();

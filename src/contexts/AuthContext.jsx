@@ -48,6 +48,7 @@ export function AuthProvider({ children }) {
   const value = {
     currentUser,
     userProfile,
+    loading,
     logout,
     isAdmin: userProfile?.role === "SUPER_ADMIN" || userProfile?.role === "ADMIN",
     isStoreLevel: ["STORE_MANAGER", "STORE_OFFICER"].includes(userProfile?.role),
@@ -56,7 +57,7 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 }

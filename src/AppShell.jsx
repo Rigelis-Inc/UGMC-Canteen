@@ -1,6 +1,5 @@
 import { lazy, Suspense } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
-import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/common/ProtectedRoute";
 
 const DashboardPage = lazy(() => import("./pages/dashboard/DashboardPage"));
@@ -30,117 +29,115 @@ function ShellLoader() {
 
 export default function AppShell() {
   return (
-    <AuthProvider>
-      <Suspense fallback={<ShellLoader />}>
-        <Routes>
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <DashboardPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/stores"
-            element={
-              <ProtectedRoute>
-                <StoresPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/stores/:storeId"
-            element={
-              <ProtectedRoute>
-                <StoreDetailPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/products"
-            element={
-              <ProtectedRoute>
-                <ProductsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/receive-stock"
-            element={
-              <ProtectedRoute>
-                <ReceiveStockPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/issue-stock"
-            element={
-              <ProtectedRoute>
-                <IssueStockPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/stock-movements"
-            element={
-              <ProtectedRoute>
-                <StockMovementsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/suppliers"
-            element={
-              <ProtectedRoute>
-                <SuppliersPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/recipients"
-            element={
-              <ProtectedRoute>
-                <RecipientsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/reports"
-            element={
-              <ProtectedRoute>
-                <ReportsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/audit-logs"
-            element={
-              <ProtectedRoute>
-                <AuditLogsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/users"
-            element={
-              <ProtectedRoute>
-                <UsersPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/settings"
-            element={
-              <ProtectedRoute>
-                <SettingsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
-        </Routes>
-      </Suspense>
-    </AuthProvider>
+    <Suspense fallback={<ShellLoader />}>
+      <Routes>
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <DashboardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/stores"
+          element={
+            <ProtectedRoute>
+              <StoresPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/stores/:storeId"
+          element={
+            <ProtectedRoute>
+              <StoreDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/products"
+          element={
+            <ProtectedRoute>
+              <ProductsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/receive-stock"
+          element={
+            <ProtectedRoute>
+              <ReceiveStockPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/issue-stock"
+          element={
+            <ProtectedRoute>
+              <IssueStockPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/stock-movements"
+          element={
+            <ProtectedRoute>
+              <StockMovementsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/suppliers"
+          element={
+            <ProtectedRoute>
+              <SuppliersPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/recipients"
+          element={
+            <ProtectedRoute>
+              <RecipientsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports"
+          element={
+            <ProtectedRoute>
+              <ReportsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/audit-logs"
+          element={
+            <ProtectedRoute>
+              <AuditLogsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/users"
+          element={
+            <ProtectedRoute>
+              <UsersPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <SettingsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      </Routes>
+    </Suspense>
   );
 }
