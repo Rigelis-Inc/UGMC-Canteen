@@ -90,20 +90,18 @@ export default function LoginPage() {
           </div>
 
           {/* Center */}
-          <div className="max-w-xs">
-            <h1 className="text-3xl font-bold text-white leading-tight mb-3">
-              Smart inventory,<br />simplified.
-            </h1>
-            <p className="text-primary-100/60 text-sm leading-relaxed">
-              Track, manage, and report on stock across all your stores in one place.
-            </p>
+          <div className="flex flex-col items-center text-center">
+            <div className="w-20 h-20 rounded-2xl bg-white/15 backdrop-blur-sm flex items-center justify-center mb-6 shadow-xl border border-white/10">
+              <span className="text-white font-extrabold text-2xl tracking-widest">UG</span>
+            </div>
+            <h1 className="text-3xl font-bold text-white tracking-tight mb-1">UGMC</h1>
+            <p className="text-lg font-medium text-primary-200/80 tracking-wide">Canteen</p>
+            <div className="w-12 h-px bg-white/20 mt-5 mb-5" />
+            <p className="text-primary-100/50 text-sm">Inventory Management System</p>
           </div>
 
           {/* Bottom */}
-          <div className="flex items-center gap-2 text-primary-200/40 text-xs">
-            <div className="w-6 h-px bg-white/15" />
-            <span>University of Ghana Medical Centre</span>
-          </div>
+          <p className="text-primary-200/40 text-xs">&copy; {new Date().getFullYear()} UGMC Canteen</p>
         </div>
       </div>
 
@@ -273,7 +271,7 @@ export default function LoginPage() {
               </form>
 
               <p className="text-center text-xs text-slate-600 mt-10">
-                &copy; {new Date().getFullYear()} UGMC
+                &copy; {new Date().getFullYear()} UGMC Canteen
               </p>
             </div>
           )}
