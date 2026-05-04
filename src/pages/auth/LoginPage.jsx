@@ -3,7 +3,7 @@ import { Navigate } from "react-router-dom";
 import { signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "../../config/firebase";
 import { useAuth } from "../../contexts/AuthContext";
-import { Mail, Lock, AlertCircle, CheckCircle2, Loader2, Eye, EyeOff, ArrowLeft, Warehouse, Shield, BarChart3, Activity } from "lucide-react";
+import { Mail, Lock, AlertCircle, CheckCircle2, Loader2, Eye, EyeOff, ArrowLeft } from "lucide-react";
 
 export default function LoginPage() {
   const { loading: authLoading, currentUser } = useAuth();
@@ -65,91 +65,68 @@ export default function LoginPage() {
     }
   }
 
-  const features = [
-    { icon: Warehouse, label: "Multi-Store Management" },
-    { icon: Activity, label: "Real-Time Stock Tracking" },
-    { icon: BarChart3, label: "Reports & Analytics" },
-    { icon: Shield, label: "Role-Based Access Control" },
-  ];
-
   return (
     <div className="min-h-screen flex bg-slate-950">
       {/* Left Panel - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gradient-to-br from-primary-600 via-primary-700 to-primary-900">
-        {/* Decorative circles */}
-        <div className="absolute -top-24 -left-24 w-96 h-96 rounded-full bg-white/5 blur-3xl" />
-        <div className="absolute top-1/3 -right-12 w-72 h-72 rounded-full bg-white/10 blur-2xl" />
-        <div className="absolute -bottom-16 left-1/4 w-64 h-64 rounded-full bg-primary-400/20 blur-3xl" />
+      <div className="hidden lg:flex lg:w-5/12 relative overflow-hidden bg-gradient-to-br from-primary-600 to-primary-800">
+        {/* Abstract shapes */}
+        <div className="absolute top-0 right-0 w-80 h-80 rounded-full bg-white/5 -translate-y-1/2 translate-x-1/3" />
+        <div className="absolute bottom-0 left-0 w-64 h-64 rounded-full bg-white/5 translate-y-1/3 -translate-x-1/4" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 rounded-2xl bg-white/5 rotate-12" />
+        <div className="absolute top-20 left-20 w-3 h-3 rounded-full bg-white/20" />
+        <div className="absolute bottom-32 right-24 w-2 h-2 rounded-full bg-white/15" />
+        <div className="absolute top-1/3 right-16 w-2 h-2 rounded-full bg-white/10" />
 
-        {/* Grid pattern overlay */}
-        <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: "radial-gradient(circle, white 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
-
-        <div className="relative z-10 flex flex-col justify-between p-12 xl:p-16 w-full">
+        <div className="relative z-10 flex flex-col justify-between p-12 w-full">
           {/* Top */}
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-lg">
-                <span className="text-white font-extrabold text-sm tracking-wider">UG</span>
-              </div>
-              <div>
-                <p className="text-white font-semibold text-base">UGMC Canteen</p>
-                <p className="text-primary-200/80 text-xs">Inventory Management</p>
-              </div>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+              <span className="text-white font-extrabold text-sm tracking-wider">UG</span>
+            </div>
+            <div>
+              <p className="text-white font-semibold text-sm">UGMC Canteen</p>
+              <p className="text-primary-200/70 text-xs">Inventory Management</p>
             </div>
           </div>
 
           {/* Center */}
-          <div className="flex-1 flex flex-col justify-center max-w-md">
-            <h1 className="text-4xl xl:text-5xl font-bold text-white leading-tight tracking-tight mb-4">
-              Streamline Your
-              <span className="block mt-1 bg-gradient-to-r from-amber-200 to-yellow-100 bg-clip-text text-transparent">
-                Inventory Workflow
-              </span>
+          <div className="max-w-xs">
+            <h1 className="text-3xl font-bold text-white leading-tight mb-3">
+              Smart inventory,<br />simplified.
             </h1>
-            <p className="text-primary-100/80 text-base leading-relaxed mb-10">
-              Manage stock across multiple stores, track movements in real time, and generate detailed reports — all from one centralized platform.
+            <p className="text-primary-100/60 text-sm leading-relaxed">
+              Track, manage, and report on stock across all your stores in one place.
             </p>
-
-            <div className="grid grid-cols-2 gap-3">
-              {features.map(({ icon: Icon, label }) => (
-                <div key={label} className="flex items-center gap-2.5 bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3 border border-white/10">
-                  <Icon size={16} className="text-amber-200 flex-shrink-0" />
-                  <span className="text-white/90 text-xs font-medium leading-tight">{label}</span>
-                </div>
-              ))}
-            </div>
           </div>
 
           {/* Bottom */}
-          <div className="flex items-center gap-2 text-primary-200/60 text-xs">
-            <div className="w-8 h-px bg-white/20" />
+          <div className="flex items-center gap-2 text-primary-200/40 text-xs">
+            <div className="w-6 h-px bg-white/15" />
             <span>University of Ghana Medical Centre</span>
           </div>
         </div>
       </div>
 
       {/* Right Panel - Form */}
-      <div className="flex-1 flex items-center justify-center px-6 py-12 sm:px-12 lg:px-16 xl:px-24 relative">
+      <div className="flex-1 flex items-center justify-center px-6 py-12 sm:px-12 lg:px-16 relative">
         {/* Mobile top branding */}
         <div className="lg:hidden absolute top-6 left-6 flex items-center gap-2.5">
           <div className="w-9 h-9 rounded-lg bg-primary-600 flex items-center justify-center shadow-lg shadow-primary-600/30">
             <span className="text-white font-extrabold text-xs tracking-wider">UG</span>
           </div>
-          <div>
-            <p className="text-white font-semibold text-sm">UGMC Canteen</p>
-          </div>
+          <p className="text-white font-semibold text-sm">UGMC Canteen</p>
         </div>
 
-        <div className="w-full max-w-md">
+        <div className="w-full max-w-sm">
           {showReset ? (
             <div className="animate-fadeIn">
               {resetSent ? (
                 <div className="text-center">
-                  <div className="w-16 h-16 rounded-2xl bg-green-500/10 flex items-center justify-center mx-auto mb-6">
-                    <CheckCircle2 size={32} className="text-green-400" />
+                  <div className="w-14 h-14 rounded-2xl bg-green-500/10 flex items-center justify-center mx-auto mb-5">
+                    <CheckCircle2 size={28} className="text-green-400" />
                   </div>
-                  <h2 className="text-2xl font-bold text-white mb-2">Reset link sent</h2>
-                  <p className="text-slate-400 text-sm mb-8 leading-relaxed">
+                  <h2 className="text-xl font-bold text-white mb-2">Reset link sent</h2>
+                  <p className="text-slate-400 text-sm mb-8">
                     Check your inbox for the link sent to{" "}
                     <span className="text-white font-medium">{email}</span>.
                   </p>
@@ -168,22 +145,22 @@ export default function LoginPage() {
                     className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-300 mb-8 transition-colors group"
                   >
                     <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" />
-                    Back to sign in
+                    Back
                   </button>
 
                   <div className="mb-8">
-                    <h2 className="text-2xl font-bold text-white">Reset password</h2>
-                    <p className="text-sm text-slate-400 mt-1.5">Enter your email to receive a reset link.</p>
+                    <h2 className="text-xl font-bold text-white">Reset password</h2>
+                    <p className="text-sm text-slate-400 mt-1">Enter your email to receive a reset link.</p>
                   </div>
 
                   {error && (
-                    <div className="mb-6 flex items-start gap-2.5 p-3.5 bg-red-500/10 border border-red-500/20 rounded-xl">
-                      <AlertCircle size={15} className="text-red-400 mt-0.5 flex-shrink-0" />
+                    <div className="mb-6 flex items-start gap-2.5 p-3 bg-red-500/10 border border-red-500/20 rounded-xl">
+                      <AlertCircle size={14} className="text-red-400 mt-0.5 flex-shrink-0" />
                       <p className="text-sm text-red-300">{error}</p>
                     </div>
                   )}
 
-                  <form onSubmit={handleReset} className="space-y-5">
+                  <form onSubmit={handleReset} className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-slate-300 mb-2">Email address</label>
                       <div className="relative">
@@ -200,7 +177,7 @@ export default function LoginPage() {
                     </div>
                     <button
                       type="submit"
-                      className="w-full bg-primary-600 hover:bg-primary-500 text-white py-3 rounded-xl text-sm font-semibold transition-all shadow-lg shadow-primary-600/25 hover:shadow-primary-500/30"
+                      className="w-full bg-primary-600 hover:bg-primary-500 text-white py-3 rounded-xl text-sm font-semibold transition-all shadow-lg shadow-primary-600/25"
                     >
                       Send reset link
                     </button>
@@ -211,28 +188,26 @@ export default function LoginPage() {
           ) : (
             <div className="animate-fadeIn">
               {/* Mobile logo */}
-              <div className="lg:hidden flex flex-col items-center mb-10">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center shadow-xl shadow-primary-600/30 mb-4">
-                  <span className="text-white font-extrabold text-lg tracking-wide">UG</span>
+              <div className="lg:hidden flex flex-col items-center mb-8">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center shadow-xl shadow-primary-600/30 mb-3">
+                  <span className="text-white font-extrabold text-sm tracking-wide">UG</span>
                 </div>
-                <h1 className="text-xl font-bold text-white">UGMC Canteen</h1>
-                <p className="text-sm text-slate-400 mt-1">Inventory Management System</p>
               </div>
 
               {/* Desktop heading */}
               <div className="hidden lg:block mb-8">
-                <h2 className="text-2xl font-bold text-white">Welcome back</h2>
-                <p className="text-sm text-slate-400 mt-1.5">Sign in to your account to continue.</p>
+                <h2 className="text-xl font-bold text-white">Welcome back</h2>
+                <p className="text-sm text-slate-400 mt-1">Sign in to your account.</p>
               </div>
 
               {error && (
-                <div className="mb-6 flex items-start gap-2.5 p-3.5 bg-red-500/10 border border-red-500/20 rounded-xl animate-fadeIn">
-                  <AlertCircle size={15} className="text-red-400 mt-0.5 flex-shrink-0" />
+                <div className="mb-6 flex items-start gap-2.5 p-3 bg-red-500/10 border border-red-500/20 rounded-xl animate-fadeIn">
+                  <AlertCircle size={14} className="text-red-400 mt-0.5 flex-shrink-0" />
                   <p className="text-sm text-red-300">{error}</p>
                 </div>
               )}
 
-              <form onSubmit={handleSubmit} className="space-y-5">
+              <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium text-slate-300 mb-2">
                     Email address
@@ -289,7 +264,7 @@ export default function LoginPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-500 hover:to-primary-400 text-white py-3 rounded-xl text-sm font-semibold transition-all shadow-lg shadow-primary-600/25 hover:shadow-primary-500/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="w-full bg-primary-600 hover:bg-primary-500 text-white py-3 rounded-xl text-sm font-semibold transition-all shadow-lg shadow-primary-600/25 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {loading ? (
                     <><Loader2 size={15} className="animate-spin" /> Signing in…</>
@@ -297,8 +272,8 @@ export default function LoginPage() {
                 </button>
               </form>
 
-              <p className="text-center text-xs text-slate-600 mt-10 leading-relaxed">
-                &copy; {new Date().getFullYear()} University of Ghana Medical Centre
+              <p className="text-center text-xs text-slate-600 mt-10">
+                &copy; {new Date().getFullYear()} UGMC
               </p>
             </div>
           )}
