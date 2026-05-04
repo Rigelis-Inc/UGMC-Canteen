@@ -102,7 +102,7 @@ export default function DashboardPage() {
   }, [userProfile, assignedStores]);
 
   const primaryStats = [
-    { label: "Total Products", value: stats.totalProducts, icon: Package, color: "from-blue-500 to-blue-600", bgLight: "bg-blue-50", textColor: "text-blue-600" },
+    { label: "Total Products", value: stats.totalProducts, icon: Package, color: "from-primary-500 to-primary-600", bgLight: "bg-primary-50", textColor: "text-primary-600" },
     { label: "Stock Value", value: `GH₵ ${stats.totalValue.toLocaleString("en-GH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, icon: DollarSign, color: "from-emerald-500 to-emerald-600", bgLight: "bg-emerald-50", textColor: "text-emerald-600" },
     { label: "Total Stores", value: stats.totalStores, icon: Warehouse, color: "from-violet-500 to-violet-600", bgLight: "bg-violet-50", textColor: "text-violet-600" },
     { label: "Suppliers", value: stats.totalSuppliers, icon: Truck, color: "from-amber-500 to-amber-600", bgLight: "bg-amber-50", textColor: "text-amber-600" },
@@ -116,12 +116,12 @@ export default function DashboardPage() {
 
   const activityStats = [
     { label: "Receipts (Month)", value: stats.receiptsThisMonth, icon: ArrowDownToLine, color: "text-green-600", bgColor: "bg-green-50" },
-    { label: "Issues (Month)", value: stats.issuesThisMonth, icon: ArrowUpToLine, color: "text-blue-600", bgColor: "bg-blue-50" },
+    { label: "Issues (Month)", value: stats.issuesThisMonth, icon: ArrowUpToLine, color: "text-primary-600", bgColor: "bg-primary-50" },
   ];
 
   const typeConfig = {
     RECEIVE: { bg: "bg-green-100", text: "text-green-700", dot: "bg-green-500", icon: ArrowDownToLine },
-    ISSUE: { bg: "bg-blue-100", text: "text-blue-700", dot: "bg-blue-500", icon: ArrowUpToLine },
+    ISSUE: { bg: "bg-primary-100", text: "text-primary-700", dot: "bg-primary-500", icon: ArrowUpToLine },
     TRANSFER: { bg: "bg-purple-100", text: "text-purple-700", dot: "bg-purple-500" },
     ADJUSTMENT: { bg: "bg-amber-100", text: "text-amber-700", dot: "bg-amber-500" },
     DAMAGE: { bg: "bg-red-100", text: "text-red-700", dot: "bg-red-500" },
