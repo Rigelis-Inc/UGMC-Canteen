@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { collection, getDocs, addDoc, doc, deleteDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../../config/firebase";
-import { Plus, Trash2, Settings, Loader2 } from "lucide-react";
+import { Plus, Trash2, Loader2 } from "lucide-react";
 import Layout from "../../components/layout/Layout";
 
 export default function SettingsPage() {
@@ -56,7 +56,7 @@ export default function SettingsPage() {
     <Layout>
       <div className="mb-6 animate-fadeIn">
         <h1 className="text-[22px] font-bold text-gray-900 tracking-tight">Settings</h1>
-        <p className="text-[13px] text-gray-500 mt-0.5">Configure system settings</p>
+        <p className="text-[13px] text-gray-500 mt-0.5">Manage product categories and units of measure</p>
       </div>
 
       <div className="space-y-6 max-w-3xl mx-auto animate-fadeIn">
@@ -122,31 +122,6 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <div className="px-6 py-5 border-b border-gray-100">
-            <h2 className="text-base font-semibold text-gray-900">System Information</h2>
-          </div>
-          <div className="p-6">
-            <dl className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div>
-                <dt className="text-sm text-gray-500 mb-1">Organization</dt>
-                <dd className="text-sm font-medium text-gray-900">UGMC</dd>
-              </div>
-              <div>
-                <dt className="text-sm text-gray-500 mb-1">System</dt>
-                <dd className="text-sm font-medium text-gray-900">Inventory Management v1.0</dd>
-              </div>
-              <div>
-                <dt className="text-sm text-gray-500 mb-1">Stores</dt>
-                <dd className="text-sm font-medium text-gray-900">4 (Stores A, B, C, Kitchen)</dd>
-              </div>
-              <div>
-                <dt className="text-sm text-gray-500 mb-1">Backend</dt>
-                <dd className="text-sm font-medium text-gray-900">Firebase (Firestore, Auth, Storage)</dd>
-              </div>
-            </dl>
-          </div>
-        </div>
       </div>
     </Layout>
   );
