@@ -1,12 +1,12 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { onAuthStateChanged, signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
+import { useState } from "react";
+import { Navigate } from "react-router-dom";
+import { signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "../../config/firebase";
 import { useAuth } from "../../contexts/AuthContext";
 import { Mail, Lock, AlertCircle, CheckCircle2, Loader2, Eye, EyeOff, ArrowLeft } from "lucide-react";
 
 export default function LoginPage() {
-  const { loading: authLoading } = useAuth();
+  const { loading: authLoading, currentUser } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -14,23 +14,6 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [resetSent, setResetSent] = useState(false);
   const [showReset, setShowReset] = useState(false);
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        navigate("/dashboard", { replace: true });
-      }
-    });
-
-    return unsubscribe;
-  }, [navigate]);
-
-  useEffect(() => {
-    if (auth.currentUser) {
-      navigate("/dashboard", { replace: true });
-    }
-  }, [navigate]);
 
   if (authLoading) {
     return (
@@ -40,7 +23,11 @@ export default function LoginPage() {
           <span className="text-sm font-medium text-slate-600">Loading sign-in...</span>
         </div>
       </div>
-    );
+      );
+  }
+
+  if (currentUser) {
+    return <Navigate to="/dashboard" replace />;
   }
 
   async function handleSubmit(e) {
@@ -49,7 +36,6 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      navigate("/dashboard", { replace: true });
     } catch (err) {
       if (err.code === "auth/user-not-found" || err.code === "auth/invalid-credential") {
         setError("Invalid email or password. Please try again.");
