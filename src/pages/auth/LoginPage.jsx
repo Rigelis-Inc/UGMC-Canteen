@@ -78,26 +78,15 @@ export default function LoginPage() {
         <div className="absolute top-1/3 right-16 w-2 h-2 rounded-full bg-white/10" />
 
         <div className="relative z-10 flex flex-col justify-between p-12 w-full">
-          {/* Top */}
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-              <span className="text-white font-extrabold text-sm tracking-wider">UG</span>
-            </div>
-            <div>
-              <p className="text-white font-semibold text-sm">UGMC Canteen</p>
-              <p className="text-primary-200/70 text-xs">Inventory Management</p>
-            </div>
-          </div>
+          {/* Top spacer */}
+          <div />
 
           {/* Center */}
           <div className="flex flex-col items-center text-center">
-            <div className="w-20 h-20 rounded-2xl bg-white/15 backdrop-blur-sm flex items-center justify-center mb-6 shadow-xl border border-white/10">
-              <span className="text-white font-extrabold text-2xl tracking-widest">UG</span>
-            </div>
-            <h1 className="text-3xl font-bold text-white tracking-tight mb-1">UGMC</h1>
-            <p className="text-lg font-medium text-primary-200/80 tracking-wide">Canteen</p>
-            <div className="w-12 h-px bg-white/20 mt-5 mb-5" />
-            <p className="text-primary-100/50 text-sm">Inventory Management System</p>
+            <h1 className="text-7xl font-bold text-white tracking-tight mb-3">UGMC</h1>
+            <p className="text-3xl font-medium text-primary-200/80 tracking-wide">Canteen</p>
+            <div className="w-20 h-px bg-white/20 mt-10 mb-8" />
+            <p className="text-primary-100/50 text-lg tracking-wide">Inventory Management System</p>
           </div>
 
           {/* Bottom */}
