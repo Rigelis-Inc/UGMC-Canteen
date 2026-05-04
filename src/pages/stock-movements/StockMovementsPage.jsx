@@ -55,7 +55,7 @@ export default function StockMovementsPage() {
 
   const typeConfig = {
     RECEIVE: { bg: "bg-green-100", text: "text-green-700", dot: "bg-green-500", icon: ArrowDownToLine },
-    ISSUE: { bg: "bg-blue-100", text: "text-blue-700", dot: "bg-blue-500", icon: ArrowUpToLine },
+    ISSUE: { bg: "bg-primary-100", text: "text-primary-700", dot: "bg-primary-500", icon: ArrowUpToLine },
     TRANSFER: { bg: "bg-purple-100", text: "text-purple-700", dot: "bg-purple-500" },
     ADJUSTMENT: { bg: "bg-amber-100", text: "text-amber-700", dot: "bg-amber-500" },
     DAMAGE: { bg: "bg-red-100", text: "text-red-700", dot: "bg-red-500" },
@@ -80,7 +80,7 @@ export default function StockMovementsPage() {
             <select
               value={filterType}
               onChange={(e) => setFilterType(e.target.value)}
-              className="px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-gray-50/50"
+              className="px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50"
             >
               <option value="">All Types</option>
               <option value="RECEIVE">Receive</option>
@@ -93,7 +93,7 @@ export default function StockMovementsPage() {
             <select
               value={filterStore}
               onChange={(e) => setFilterStore(e.target.value)}
-              className="px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-gray-50/50"
+              className="px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50"
             >
               <option value="">All Stores</option>
               {stores.map((s) => (
@@ -106,14 +106,14 @@ export default function StockMovementsPage() {
                 type="date"
                 value={dateFrom}
                 onChange={(e) => setDateFrom(e.target.value)}
-                className="px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-gray-50/50"
+                className="px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50"
               />
               <span className="text-gray-400 text-sm">to</span>
               <input
                 type="date"
                 value={dateTo}
                 onChange={(e) => setDateTo(e.target.value)}
-                className="px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-gray-50/50"
+                className="px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50"
               />
             </div>
             {hasActiveFilters && (

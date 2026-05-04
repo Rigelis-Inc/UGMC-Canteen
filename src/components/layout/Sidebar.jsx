@@ -87,7 +87,7 @@ function NavGroup({ group, collapsed, isOpen, onToggle, location, onNav }) {
               }`}
             >
               {isActive && (
-                <span className="absolute inset-0 bg-gradient-to-r from-blue-600 to-blue-500 rounded-lg shadow-lg shadow-blue-600/20" />
+                <span className="absolute inset-0 bg-gradient-to-r from-primary-600 to-primary-500 rounded-lg shadow-lg shadow-primary-600/20" />
               )}
               <item.icon size={16} className="relative flex-shrink-0" />
             </Link>
@@ -104,7 +104,7 @@ function NavGroup({ group, collapsed, isOpen, onToggle, location, onNav }) {
         onClick={onToggle}
         className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[11px] font-semibold uppercase tracking-[0.1em] transition-all duration-200 ${
           hasActive
-            ? "text-blue-400"
+            ? "text-primary-400"
             : "text-slate-600 hover:text-slate-300"
         }`}
       >
@@ -136,7 +136,7 @@ function NavGroup({ group, collapsed, isOpen, onToggle, location, onNav }) {
               >
                 {isActive && (
                   <>
-                    <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 bg-blue-500 rounded-full" />
+                    <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 bg-primary-500 rounded-full" />
                     <span className="absolute inset-0 bg-slate-700/40 rounded-md" />
                   </>
                 )}
@@ -232,7 +232,7 @@ export default function Sidebar({ collapsed, onToggle }) {
           {/* Header */}
           <div className={`flex items-center px-4 h-[60px] flex-shrink-0 ${collapsed ? "justify-center" : "justify-between"}`}>
             <div className="flex items-center gap-3 min-w-0 overflow-hidden">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-600/30">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-primary-600/30">
                 <span className="text-white font-bold text-[11px] tracking-wider">UG</span>
               </div>
               {!collapsed && (
@@ -275,7 +275,7 @@ export default function Sidebar({ collapsed, onToggle }) {
                   }`}
                 >
                   {isDashboardActive ? (
-                    <span className="absolute inset-0 bg-gradient-to-r from-blue-600/90 to-blue-500/90 rounded-lg shadow-lg shadow-blue-600/20" />
+                    <span className="absolute inset-0 bg-gradient-to-r from-primary-600/90 to-primary-500/90 rounded-lg shadow-lg shadow-primary-600/20" />
                   ) : (
                     <span className="absolute inset-0 bg-slate-800/30 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
                   )}
@@ -322,7 +322,7 @@ export default function Sidebar({ collapsed, onToggle }) {
             ) : (
               <>
                 <div className="flex items-center gap-3 px-2 py-2 rounded-lg bg-slate-800/30">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center flex-shrink-0 ring-2 ring-slate-700/50 shadow-md shadow-blue-600/20">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center flex-shrink-0 ring-2 ring-slate-700/50 shadow-md shadow-primary-600/20">
                     <span className="text-xs font-semibold text-white">{userProfile?.fullName?.charAt(0)?.toUpperCase() || "U"}</span>
                   </div>
                   <div className="flex-1 min-w-0">

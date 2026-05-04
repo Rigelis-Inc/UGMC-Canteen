@@ -19,7 +19,7 @@ export default function LoginPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
-          <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-blue-600" />
+          <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-primary-600" />
           <span className="text-sm font-medium text-slate-600">Loading sign-in...</span>
         </div>
       </div>
@@ -71,7 +71,7 @@ export default function LoginPage() {
 
         {/* Branding above card */}
         <div className="flex flex-col items-center mb-8">
-          <div className="w-16 h-16 rounded-2xl bg-blue-600 flex items-center justify-center shadow-xl shadow-blue-600/25 mb-4">
+          <div className="w-16 h-16 rounded-2xl bg-primary-600 flex items-center justify-center shadow-xl shadow-primary-600/25 mb-4">
             <span className="text-white font-extrabold text-xl tracking-wide">UG</span>
           </div>
           <h1 className="text-xl font-bold text-gray-900">UGMC Canteen</h1>
@@ -122,7 +122,7 @@ export default function LoginPage() {
                           type="email"
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
-                          className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all placeholder:text-gray-400"
+                          className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:outline-none focus:bg-white focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all placeholder:text-gray-400"
                           placeholder="you@ugmc.edu.gh"
                           required
                         />
@@ -130,7 +130,7 @@ export default function LoginPage() {
                     </div>
                     <button
                       type="submit"
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl text-sm font-semibold transition-colors shadow-sm"
+                      className="w-full bg-primary-600 hover:bg-primary-700 text-white py-3 rounded-xl text-sm font-semibold transition-colors shadow-sm"
                     >
                       Send reset link
                     </button>
@@ -173,7 +173,7 @@ export default function LoginPage() {
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all placeholder:text-gray-400"
+                      className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:outline-none focus:bg-white focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all placeholder:text-gray-400"
                       placeholder="you@ugmc.edu.gh"
                       autoComplete="email"
                       required
@@ -187,7 +187,7 @@ export default function LoginPage() {
                     <button
                       type="button"
                       onClick={() => { setShowReset(true); setError(""); }}
-                      className="text-xs text-blue-600 hover:text-blue-700 font-medium transition-colors"
+                      className="text-xs text-primary-600 hover:text-primary-700 font-medium transition-colors"
                     >
                       Forgot password?
                     </button>
@@ -199,7 +199,7 @@ export default function LoginPage() {
                       type={showPassword ? "text" : "password"}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full pl-10 pr-11 py-3 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all placeholder:text-gray-400"
+                      className="w-full pl-10 pr-11 py-3 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:outline-none focus:bg-white focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all placeholder:text-gray-400"
                       placeholder="Enter your password"
                       autoComplete="current-password"
                       required
@@ -218,7 +218,7 @@ export default function LoginPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl text-sm font-semibold transition-colors shadow-sm disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-2"
+                  className="w-full bg-primary-600 hover:bg-primary-700 text-white py-3 rounded-xl text-sm font-semibold transition-colors shadow-sm disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-2"
                 >
                   {loading ? (
                     <><Loader2 size={15} className="animate-spin" /> Signing in…</>
