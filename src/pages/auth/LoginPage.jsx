@@ -82,15 +82,14 @@ export default function LoginPage() {
           <div />
 
           {/* Center */}
+
+          {/* Center */}
           <div className="flex flex-col items-center text-center">
             <h1 className="text-7xl font-bold text-white tracking-tight mb-3">UGMC</h1>
             <p className="text-3xl font-medium text-primary-200/80 tracking-wide">Canteen</p>
             <div className="w-20 h-px bg-white/20 mt-10 mb-8" />
             <p className="text-primary-100/50 text-lg tracking-wide">Inventory Management System</p>
           </div>
-
-          {/* Bottom */}
-          <p className="text-primary-200/40 text-xs">&copy; {new Date().getFullYear()} UGMC Canteen</p>
         </div>
       </div>
 
