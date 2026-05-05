@@ -82,7 +82,7 @@ function NavGroup({ group, collapsed, isOpen, onToggle, location, onNav }) {
             <Link
               key={item.path}
               to={item.path}
-              onClick={onNav}
+              onClick={() => onNav(group.id)}
               title={item.label}
               className={`group relative flex items-center justify-center w-full px-2 py-2.5 rounded-lg transition-all duration-200 ${
                 isActive
@@ -131,7 +131,7 @@ function NavGroup({ group, collapsed, isOpen, onToggle, location, onNav }) {
               <Link
                 key={item.path}
                 to={item.path}
-                onClick={onNav}
+                onClick={() => onNav(group.id)}
                 className={`group relative flex items-center gap-2.5 px-2.5 py-2 rounded-md text-[13px] font-medium transition-all duration-200 ${
                   isActive
                     ? "text-white"
@@ -158,7 +158,6 @@ function NavGroup({ group, collapsed, isOpen, onToggle, location, onNav }) {
 export default function Sidebar({ collapsed, onToggle }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-  const [openGroup, setOpenGroup] = useState("inventory");
   const location = useLocation();
   const navigate = useNavigate();
   const { userProfile, logout } = useAuth();
@@ -182,11 +181,39 @@ export default function Sidebar({ collapsed, onToggle }) {
       )
     )?.id || null;
 
+  const [openGroup, setOpenGroup] = useState(() => {
+    if (typeof window === "undefined") {
+      return null;
+    }
+
+    return window.localStorage.getItem("sidebar.openGroup");
+  });
+
+  const validOpenGroupId = filteredGroups.some((group) => group.id === openGroup) ? openGroup : null;
+
   const handleToggle = useCallback((groupId) => {
-    setOpenGroup((prev) => (prev === groupId ? null : groupId));
+    setOpenGroup((prev) => {
+      const nextGroupId = prev === groupId ? null : groupId;
+
+      if (typeof window !== "undefined") {
+        if (nextGroupId) {
+          window.localStorage.setItem("sidebar.openGroup", nextGroupId);
+        } else {
+          window.localStorage.removeItem("sidebar.openGroup");
+        }
+      }
+
+      return nextGroupId;
+    });
   }, []);
 
-  const handleNav = useCallback(() => {
+  const handleNav = useCallback((groupId) => {
+    if (groupId) {
+      setOpenGroup(groupId);
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem("sidebar.openGroup", groupId);
+      }
+    }
     setMobileOpen(false);
   }, []);
 
@@ -303,7 +330,7 @@ export default function Sidebar({ collapsed, onToggle }) {
                 key={group.id}
                 group={group}
                 collapsed={collapsed}
-                isOpen={openGroup === group.id || (!openGroup && activeGroupId === group.id)}
+                isOpen={validOpenGroupId === group.id || (!validOpenGroupId && activeGroupId === group.id)}
                 onToggle={() => handleToggle(group.id)}
                 location={location}
                 onNav={handleNav}
