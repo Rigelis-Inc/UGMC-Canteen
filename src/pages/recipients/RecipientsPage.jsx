@@ -1,15 +1,23 @@
 import { useState, useEffect } from "react";
-import { collection, getDocs, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, getDocs, addDoc, doc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../../config/firebase";
-import { Plus, X, Users, Loader2, Search } from "lucide-react";
+import { useAuth } from "../../contexts/AuthContext";
+import { writeAuditLog } from "../../lib/audit";
+import { Plus, X, Users, Loader2, Search, PencilLine, ToggleLeft, ToggleRight } from "lucide-react";
 import Layout from "../../components/layout/Layout";
+import ConfirmActionModal from "../../components/common/ConfirmActionModal";
 
 const RECIPIENT_TYPES = ["DEPARTMENT", "WARD", "UNIT", "STAFF", "STORE", "OTHER"];
 
 export default function RecipientsPage() {
+  const { currentUser, userProfile } = useAuth();
   const [recipients, setRecipients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedRecipient, setSelectedRecipient] = useState(null);
+  const [showStatusModal, setShowStatusModal] = useState(false);
+  const [selectedStatusRecipient, setSelectedStatusRecipient] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
@@ -38,6 +46,51 @@ export default function RecipientsPage() {
     STORE: "bg-cyan-100 text-cyan-700",
     OTHER: "bg-gray-100 text-gray-700",
   };
+
+  function openEditModal(recipient) {
+    setSelectedRecipient(recipient);
+    setShowEditModal(true);
+  }
+
+  function openToggleRecipientStatusModal(recipient) {
+    setSelectedStatusRecipient(recipient);
+    setShowStatusModal(true);
+  }
+
+  async function toggleRecipientStatus(recipient) {
+    const nextIsActive = recipient.isActive === false;
+
+    try {
+      await updateDoc(doc(db, "recipients", recipient.id), {
+        isActive: nextIsActive,
+        updatedAt: serverTimestamp(),
+      });
+      await writeAuditLog(db, {
+        action: nextIsActive ? "Recipient reactivated" : "Recipient deactivated",
+        entityType: "recipient",
+        entityId: recipient.id,
+        description: `${nextIsActive ? "Reactivated" : "Deactivated"} recipient ${recipient.name}`,
+        metadata: {
+          name: recipient.name,
+          isActive: nextIsActive,
+        },
+        currentUser,
+        userProfile,
+      });
+      setRecipients((prev) =>
+        prev.map((entry) =>
+          entry.id === recipient.id
+            ? {
+                ...entry,
+                isActive: nextIsActive,
+              }
+            : entry
+        )
+      );
+    } catch (err) {
+      console.error("Error updating recipient status:", err);
+    }
+  }
 
   return (
     <Layout>
@@ -95,11 +148,12 @@ export default function RecipientsPage() {
                   <th className="text-left px-6 py-3.5 font-medium text-gray-500 text-xs uppercase tracking-wider">Phone</th>
                   <th className="text-left px-6 py-3.5 font-medium text-gray-500 text-xs uppercase tracking-wider">Email</th>
                   <th className="text-left px-6 py-3.5 font-medium text-gray-500 text-xs uppercase tracking-wider">Status</th>
+                  <th className="text-right px-6 py-3.5 font-medium text-gray-500 text-xs uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {filtered.map((recipient) => (
-                  <tr key={recipient.id} className="hover:bg-gray-50/50 transition-colors">
+                  <tr key={recipient.id} className={`hover:bg-gray-50/50 transition-colors ${recipient.isActive === false ? "opacity-70" : ""}`}>
                     <td className="px-6 py-4 font-medium text-gray-900">{recipient.name}</td>
                     <td className="px-6 py-4">
                       <span className={`inline-flex px-2.5 py-1 text-xs font-medium rounded-full ${typeColors[recipient.type] || "bg-gray-100 text-gray-700"}`}>
@@ -115,6 +169,30 @@ export default function RecipientsPage() {
                         {recipient.isActive !== false ? "Active" : "Inactive"}
                       </span>
                     </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          type="button"
+                          onClick={() => openEditModal(recipient)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 text-xs font-medium transition-colors"
+                        >
+                          <PencilLine size={13} />
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => openToggleRecipientStatusModal(recipient)}
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                            recipient.isActive !== false
+                              ? "border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100"
+                              : "border border-green-200 bg-green-50 text-green-700 hover:bg-green-100"
+                          }`}
+                        >
+                          {recipient.isActive !== false ? <ToggleLeft size={13} /> : <ToggleRight size={13} />}
+                          {recipient.isActive !== false ? "Deactivate" : "Activate"}
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -124,11 +202,197 @@ export default function RecipientsPage() {
       </div>
 
       {showAddModal && <AddRecipientModal onClose={() => setShowAddModal(false)} />}
+      {showEditModal && selectedRecipient && (
+        <EditRecipientModal
+          recipient={selectedRecipient}
+          onClose={() => {
+            setShowEditModal(false);
+            setSelectedRecipient(null);
+          }}
+          onSaved={(updatedRecipient) => {
+            setRecipients((prev) => prev.map((entry) => (entry.id === updatedRecipient.id ? updatedRecipient : entry)));
+            setShowEditModal(false);
+            setSelectedRecipient(null);
+          }}
+        />
+      )}
+      {showStatusModal && selectedStatusRecipient && (
+        <ConfirmActionModal
+          open={showStatusModal}
+          title={`${selectedStatusRecipient.isActive === false ? "Activate" : "Deactivate"} recipient`}
+          description={`${selectedStatusRecipient.isActive === false ? "Reactivate" : "Deactivate"} "${selectedStatusRecipient.name}"?`}
+          confirmLabel={selectedStatusRecipient.isActive === false ? "Activate" : "Deactivate"}
+          tone={selectedStatusRecipient.isActive === false ? "success" : "warning"}
+          onCancel={() => {
+            setShowStatusModal(false);
+            setSelectedStatusRecipient(null);
+          }}
+          onConfirm={async () => {
+            if (!selectedStatusRecipient) return;
+            await toggleRecipientStatus(selectedStatusRecipient);
+            setShowStatusModal(false);
+            setSelectedStatusRecipient(null);
+          }}
+        />
+      )}
     </Layout>
   );
 }
 
+function EditRecipientModal({ recipient, onClose, onSaved }) {
+  const { currentUser, userProfile } = useAuth();
+  const [formData, setFormData] = useState({
+    name: recipient.name || "",
+    type: recipient.type || "DEPARTMENT",
+    phone: recipient.phone || "",
+    email: recipient.email || "",
+    notes: recipient.notes || "",
+    isActive: recipient.isActive !== false,
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+
+    try {
+      const updates = {
+        name: formData.name.trim(),
+        type: formData.type,
+        phone: formData.phone.trim(),
+        email: formData.email.trim(),
+        notes: formData.notes.trim(),
+        isActive: formData.isActive,
+        updatedAt: serverTimestamp(),
+      };
+
+      await updateDoc(doc(db, "recipients", recipient.id), updates);
+      await writeAuditLog(db, {
+        action: "Recipient updated",
+        entityType: "recipient",
+        entityId: recipient.id,
+        description: `Updated recipient ${recipient.name}`,
+        metadata: updates,
+        currentUser,
+        userProfile,
+      });
+
+      onSaved({
+        ...recipient,
+        ...updates,
+      });
+    } catch (err) {
+      setError("Failed to update recipient.");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn">
+        <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl">
+          <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">Edit Recipient</h2>
+              <p className="text-sm text-gray-500 mt-0.5">Update recipient details</p>
+            </div>
+            <button onClick={onClose} className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+              <X size={18} />
+            </button>
+          </div>
+
+          {error && (
+            <div className="mx-6 mt-4 p-3 bg-red-50 border border-red-100 text-red-700 text-sm rounded-lg">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="p-6 space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Name</label>
+              <input
+                type="text"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50"
+                required
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Type</label>
+                <select
+                  value={formData.type}
+                  onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                  className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50"
+                >
+                  {RECIPIENT_TYPES.map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Status</label>
+                <select
+                  value={formData.isActive ? "active" : "inactive"}
+                  onChange={(e) => setFormData({ ...formData, isActive: e.target.value === "active" })}
+                  className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50"
+                >
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Phone</label>
+                <input
+                  type="text"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Notes</label>
+              <textarea
+                value={formData.notes}
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                rows={3}
+                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50 resize-none"
+              />
+            </div>
+            <div className="flex gap-3 pt-4 border-t border-gray-100">
+              <button type="button" onClick={onClose} className="flex-1 px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                Cancel
+              </button>
+              <button type="submit" disabled={loading} className="flex-1 px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-semibold disabled:opacity-50 transition-colors flex items-center justify-center gap-2">
+                {loading ? <><Loader2 size={14} className="animate-spin" />Saving...</> : "Save Changes"}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+  );
+}
+
 function AddRecipientModal({ onClose }) {
+  const { currentUser, userProfile } = useAuth();
   const [formData, setFormData] = useState({
     name: "",
     type: "DEPARTMENT",
@@ -148,6 +412,18 @@ function AddRecipientModal({ onClose }) {
         isActive: true,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
+      });
+      await writeAuditLog(db, {
+        action: "Recipient created",
+        entityType: "recipient",
+        description: `Created recipient ${formData.name}`,
+        metadata: {
+          type: formData.type,
+          phone: formData.phone,
+          email: formData.email,
+        },
+        currentUser,
+        userProfile,
       });
       onClose();
       window.location.reload();
