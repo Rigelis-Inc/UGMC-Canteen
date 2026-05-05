@@ -4,6 +4,5 @@
   "outputDirectory": "dist",
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
-  ],
-  "nodeVersion": "20.x"
+  ]
 }
