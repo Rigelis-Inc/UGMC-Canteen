@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { hasPermission } from "../../lib/permissions";
@@ -8,6 +8,9 @@ import {
   Package,
   ArrowDownToLine,
   ArrowUpToLine,
+  ArrowUpDown,
+  SlidersHorizontal,
+  TriangleAlert,
   Truck,
   Users,
   BarChart3,
@@ -23,8 +26,6 @@ import {
   ChevronRight,
 } from "lucide-react";
 
-const dashboardItem = { label: "Dashboard", icon: LayoutDashboard, path: "/dashboard", permission: "viewDashboard" };
-
 const navGroups = [
   {
     id: "inventory",
@@ -35,6 +36,9 @@ const navGroups = [
       { label: "Products", icon: Package, path: "/products", permission: "manageProducts" },
       { label: "Receive Stock", icon: ArrowDownToLine, path: "/receive-stock", permission: "receiveStock" },
       { label: "Issue Stock", icon: ArrowUpToLine, path: "/issue-stock", permission: "issueStock" },
+      { label: "Transfer Stock", icon: ArrowUpDown, path: "/transfer-stock", permission: "transferStock" },
+      { label: "Adjust Stock", icon: SlidersHorizontal, path: "/adjust-stock", permission: "adjustStock" },
+      { label: "Damage / Expiry", icon: TriangleAlert, path: "/damage-expiry", permission: "adjustStock" },
       { label: "Movements", icon: Activity, path: "/stock-movements", permission: "viewReports" },
     ],
   },
@@ -169,18 +173,14 @@ export default function Sidebar({ collapsed, onToggle }) {
 
   const canViewDashboard = hasPermission(role, "viewDashboard");
 
-  useEffect(() => {
-    const activeGroup = filteredGroups.find((group) =>
+  const activeGroupId =
+    filteredGroups.find((group) =>
       group.items.some(
         (item) =>
           location.pathname === item.path ||
           (item.path !== "/dashboard" && location.pathname.startsWith(item.path + "/"))
       )
-    );
-    if (activeGroup) {
-      setOpenGroup(activeGroup.id);
-    }
-  }, [location.pathname]);
+    )?.id || null;
 
   const handleToggle = useCallback((groupId) => {
     setOpenGroup((prev) => (prev === groupId ? null : groupId));
@@ -303,7 +303,7 @@ export default function Sidebar({ collapsed, onToggle }) {
                 key={group.id}
                 group={group}
                 collapsed={collapsed}
-                isOpen={openGroup === group.id}
+                isOpen={openGroup === group.id || (!openGroup && activeGroupId === group.id)}
                 onToggle={() => handleToggle(group.id)}
                 location={location}
                 onNav={handleNav}

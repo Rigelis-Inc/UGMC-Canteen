@@ -11,6 +11,9 @@ const RecipientsPage = lazy(() => import("./pages/recipients/RecipientsPage"));
 const StockMovementsPage = lazy(() => import("./pages/stock-movements/StockMovementsPage"));
 const ReceiveStockPage = lazy(() => import("./pages/stock-operations/ReceiveStockPage"));
 const IssueStockPage = lazy(() => import("./pages/stock-operations/IssueStockPage"));
+const TransferStockPage = lazy(() => import("./pages/stock-operations/TransferStockPage"));
+const AdjustStockPage = lazy(() => import("./pages/stock-operations/AdjustStockPage"));
+const DamageExpiryPage = lazy(() => import("./pages/stock-operations/DamageExpiryPage"));
 const ReportsPage = lazy(() => import("./pages/reports/ReportsPage"));
 const AuditLogsPage = lazy(() => import("./pages/audit-logs/AuditLogsPage"));
 const UsersPage = lazy(() => import("./pages/users/UsersPage"));
@@ -34,7 +37,7 @@ export default function AppShell() {
         <Route
           path="/dashboard"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredPermission="viewDashboard">
               <DashboardPage />
             </ProtectedRoute>
           }
@@ -42,7 +45,7 @@ export default function AppShell() {
         <Route
           path="/stores"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredPermission="viewDashboard">
               <StoresPage />
             </ProtectedRoute>
           }
@@ -50,7 +53,7 @@ export default function AppShell() {
         <Route
           path="/stores/:storeId"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredPermission="viewDashboard">
               <StoreDetailPage />
             </ProtectedRoute>
           }
@@ -58,7 +61,7 @@ export default function AppShell() {
         <Route
           path="/products"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredPermission="manageProducts">
               <ProductsPage />
             </ProtectedRoute>
           }
@@ -66,7 +69,7 @@ export default function AppShell() {
         <Route
           path="/receive-stock"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredPermission="receiveStock">
               <ReceiveStockPage />
             </ProtectedRoute>
           }
@@ -74,15 +77,39 @@ export default function AppShell() {
         <Route
           path="/issue-stock"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredPermission="issueStock">
               <IssueStockPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/transfer-stock"
+          element={
+            <ProtectedRoute requiredPermission="transferStock">
+              <TransferStockPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/adjust-stock"
+          element={
+            <ProtectedRoute requiredPermission="adjustStock">
+              <AdjustStockPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/damage-expiry"
+          element={
+            <ProtectedRoute requiredPermission="adjustStock">
+              <DamageExpiryPage />
             </ProtectedRoute>
           }
         />
         <Route
           path="/stock-movements"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredPermission="viewReports">
               <StockMovementsPage />
             </ProtectedRoute>
           }
@@ -90,7 +117,7 @@ export default function AppShell() {
         <Route
           path="/suppliers"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredPermission="manageSuppliers">
               <SuppliersPage />
             </ProtectedRoute>
           }
@@ -98,7 +125,7 @@ export default function AppShell() {
         <Route
           path="/recipients"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredPermission="manageRecipients">
               <RecipientsPage />
             </ProtectedRoute>
           }
@@ -106,7 +133,7 @@ export default function AppShell() {
         <Route
           path="/reports"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredPermission="viewReports">
               <ReportsPage />
             </ProtectedRoute>
           }
@@ -114,7 +141,7 @@ export default function AppShell() {
         <Route
           path="/audit-logs"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredPermission="viewAuditLogs">
               <AuditLogsPage />
             </ProtectedRoute>
           }
@@ -122,7 +149,7 @@ export default function AppShell() {
         <Route
           path="/users"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredPermission="manageUsers">
               <UsersPage />
             </ProtectedRoute>
           }
@@ -130,7 +157,7 @@ export default function AppShell() {
         <Route
           path="/settings"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredPermission="manageSettings">
               <SettingsPage />
             </ProtectedRoute>
           }

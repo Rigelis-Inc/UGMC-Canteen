@@ -1,8 +1,215 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function userDoc() {
+      return /databases/$(database)/documents/users/$(request.auth.uid);
+    }
+
+    function userExists() {
+      return signedIn() && exists(userDoc());
+    }
+
+    function userData() {
+      return get(userDoc()).data;
+    }
+
+    function userRole() {
+      return userExists() ? userData().role : null;
+    }
+
+    function assignedStores() {
+      return userExists()
+        ? (userData().assignedStores is list ? userData().assignedStores : [])
+        : [];
+    }
+
+    function isAdmin() {
+      return userRole() in ["SUPER_ADMIN", "ADMIN"];
+    }
+
+    function canManageProducts() {
+      return userRole() in ["SUPER_ADMIN", "ADMIN", "STORE_MANAGER", "STORE_OFFICER"];
+    }
+
+    function canManageStock() {
+      return userRole() in ["SUPER_ADMIN", "ADMIN", "STORE_MANAGER", "STORE_OFFICER", "SUPERVISOR"];
+    }
+
+    function canManageSuppliers() {
+      return userRole() in ["SUPER_ADMIN", "ADMIN", "STORE_MANAGER"];
+    }
+
+    function canManageRecipients() {
+      return userRole() in ["SUPER_ADMIN", "ADMIN", "STORE_MANAGER"];
+    }
+
+    function canReadAuditLogs() {
+      return isAdmin() || userRole() in ["SUPERVISOR", "AUDITOR"];
+    }
+
+    function hasStoreAccess(storeId) {
+      return isAdmin() || assignedStores().size() == 0 || (storeId is string && storeId in assignedStores());
+    }
+
+    function hasCreateTimestamps() {
+      return request.resource.data.createdAt == request.time && request.resource.data.updatedAt == request.time;
+    }
+
+    function hasUpdateTimestamp() {
+      return request.resource.data.updatedAt == request.time;
+    }
+
+    function isNumeric(value) {
+      return value is int || value is float;
+    }
+
+    function validStoreProductData() {
+      return request.resource.data.storeId is string
+        && request.resource.data.productId is string
+        && request.resource.data.productName is string
+        && request.resource.data.unit is string
+        && request.resource.data.quantityOnHand is int
+        && request.resource.data.quantityOnHand >= 0
+        && request.resource.data.reorderLevel is int
+        && request.resource.data.reorderLevel >= 0
+        && isNumeric(request.resource.data.unitCost)
+        && isNumeric(request.resource.data.totalValue)
+        && request.resource.data.isActive is bool;
+    }
+
+    function validStockMovementData() {
+      return request.resource.data.type in ["RECEIVE", "ISSUE", "TRANSFER", "ADJUSTMENT", "DAMAGE", "EXPIRY"]
+        && request.resource.data.storeId is string
+        && request.resource.data.productId is string
+        && request.resource.data.productName is string
+        && request.resource.data.quantity is int
+        && request.resource.data.quantity > 0
+        && request.resource.data.unit is string
+        && isNumeric(request.resource.data.unitCost)
+        && isNumeric(request.resource.data.totalCost)
+        && request.resource.data.status == "COMPLETED"
+        && request.resource.data.performedBy == request.auth.uid;
+    }
+
+    function validAuditLogData() {
+      return request.resource.data.userId == request.auth.uid
+        && request.resource.data.userName is string
+        && request.resource.data.action is string
+        && request.resource.data.description is string
+        && request.resource.data.createdAt == request.time;
+    }
+
+    match /users/{userId} {
+      allow read: if signedIn() && (isAdmin() || request.auth.uid == userId);
+      allow create: if signedIn() && isAdmin() && hasCreateTimestamps();
+      allow update: if signedIn() && isAdmin() && hasUpdateTimestamp();
+      allow delete: if signedIn() && isAdmin();
+    }
+
+    match /stores/{storeId} {
+      allow read: if signedIn();
+      allow create: if signedIn() && isAdmin() && hasCreateTimestamps();
+      allow update: if signedIn() && isAdmin() && hasUpdateTimestamp();
+      allow delete: if signedIn() && isAdmin();
+    }
+
+    match /products/{productId} {
+      allow read: if signedIn();
+      allow create: if signedIn() && canManageProducts() && hasCreateTimestamps()
+        && request.resource.data.name is string
+        && request.resource.data.normalizedName is string
+        && request.resource.data.unit is string
+        && request.resource.data.isActive is bool;
+      allow update: if signedIn() && canManageProducts() && hasUpdateTimestamp()
+        && request.resource.data.name is string
+        && request.resource.data.normalizedName is string
+        && request.resource.data.unit is string
+        && request.resource.data.isActive is bool;
+      allow delete: if signedIn() && isAdmin();
+    }
+
+    match /productCategories/{categoryId} {
+      allow read: if signedIn();
+      allow create: if signedIn() && isAdmin() && hasCreateTimestamps()
+        && request.resource.data.name is string
+        && request.resource.data.isActive is bool;
+      allow update: if signedIn() && isAdmin() && hasUpdateTimestamp()
+        && request.resource.data.name is string
+        && request.resource.data.isActive is bool;
+      allow delete: if signedIn() && isAdmin();
+    }
+
+    match /suppliers/{supplierId} {
+      allow read: if signedIn();
+      allow create: if signedIn() && canManageSuppliers() && hasCreateTimestamps()
+        && request.resource.data.name is string
+        && request.resource.data.isActive is bool;
+      allow update: if signedIn() && canManageSuppliers() && hasUpdateTimestamp()
+        && request.resource.data.name is string
+        && request.resource.data.isActive is bool;
+      allow delete: if signedIn() && isAdmin();
+    }
+
+    match /recipients/{recipientId} {
+      allow read: if signedIn();
+      allow create: if signedIn() && canManageRecipients() && hasCreateTimestamps()
+        && request.resource.data.name is string
+        && request.resource.data.type is string
+        && request.resource.data.isActive is bool;
+      allow update: if signedIn() && canManageRecipients() && hasUpdateTimestamp()
+        && request.resource.data.name is string
+        && request.resource.data.type is string
+        && request.resource.data.isActive is bool;
+      allow delete: if signedIn() && isAdmin();
+    }
+
+    match /storeProducts/{storeProductId} {
+      allow read: if signedIn() && hasStoreAccess(resource.data.storeId);
+      allow create: if signedIn() && canManageStock() && hasStoreAccess(request.resource.data.storeId)
+        && hasCreateTimestamps()
+        && validStoreProductData();
+      allow update: if signedIn() && canManageStock() && hasStoreAccess(resource.data.storeId)
+        && hasUpdateTimestamp()
+        && request.resource.data.storeId == resource.data.storeId
+        && request.resource.data.productId == resource.data.productId
+        && validStoreProductData();
+      allow delete: if signedIn() && isAdmin();
+    }
+
+    match /stockMovements/{movementId} {
+      allow read: if signedIn() && (
+        canReadAuditLogs() ||
+        hasStoreAccess(resource.data.storeId)
+      );
+      allow create: if signedIn() && canManageStock() && hasStoreAccess(request.resource.data.storeId)
+        && hasCreateTimestamps()
+        && validStockMovementData();
+      allow update: if signedIn() && isAdmin() && hasUpdateTimestamp();
+      allow delete: if signedIn() && isAdmin();
+    }
+
+    match /auditLogs/{logId} {
+      allow read: if signedIn() && (
+        canReadAuditLogs() ||
+        hasStoreAccess(resource.data.storeId)
+      );
+      allow create: if signedIn() && validAuditLogData();
+      allow update, delete: if false;
+    }
+
+    match /settings/{settingId} {
+      allow read: if signedIn() && isAdmin();
+      allow create: if signedIn() && isAdmin() && hasCreateTimestamps();
+      allow update: if signedIn() && isAdmin() && hasUpdateTimestamp();
+      allow delete: if signedIn() && isAdmin();
+    }
+
     match /{document=**} {
-      allow read, write: if request.auth != null;
+      allow read, write: if false;
     }
   }
 }

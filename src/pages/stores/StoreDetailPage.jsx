@@ -1,14 +1,18 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { doc, getDoc, collection, query, where, getDocs, orderBy, limit, addDoc, serverTimestamp } from "firebase/firestore";
+import { doc, getDoc, collection, query, where, getDocs, orderBy, limit, addDoc, serverTimestamp, updateDoc } from "firebase/firestore";
 import { db } from "../../config/firebase";
-import { Package, AlertTriangle, Clock, DollarSign, Warehouse, TrendingDown, ArrowLeft, ArrowUpToLine, Plus, Upload, Download, X, Loader2 } from "lucide-react";
+import { useAuth } from "../../contexts/AuthContext";
+import { writeAuditLog } from "../../lib/audit";
+import { Package, AlertTriangle, DollarSign, Warehouse, TrendingDown, ArrowLeft, ArrowUpToLine, Plus, Upload, Download, X, Loader2, PencilLine, ToggleLeft, ToggleRight } from "lucide-react";
 import * as XLSX from "xlsx";
 import Layout from "../../components/layout/Layout";
+import ConfirmActionModal from "../../components/common/ConfirmActionModal";
 
 export default function StoreDetailPage() {
   const { storeId } = useParams();
   const navigate = useNavigate();
+  const { currentUser, userProfile } = useAuth();
   const [store, setStore] = useState(null);
   const [activeTab, setActiveTab] = useState("overview");
   const [products, setProducts] = useState([]);
@@ -17,6 +21,10 @@ export default function StoreDetailPage() {
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [showStatusModal, setShowStatusModal] = useState(false);
+  const [selectedStatusProduct, setSelectedStatusProduct] = useState(null);
 
   useEffect(() => {
     async function fetchData() {
@@ -93,6 +101,59 @@ export default function StoreDetailPage() {
   ).length;
   const outOfStockCount = products.filter((p) => p.quantityOnHand <= 0).length;
   const totalValue = products.reduce((sum, p) => sum + (p.totalValue || 0), 0);
+
+  function getCategoryName(categoryId) {
+    return categories.find((category) => category.id === categoryId)?.name || categoryId || "—";
+  }
+
+  function openEditModal(product) {
+    setSelectedProduct(product);
+    setShowEditModal(true);
+  }
+
+  function openToggleProductStatusModal(product) {
+    setSelectedStatusProduct(product);
+    setShowStatusModal(true);
+  }
+
+  async function handleToggleProductStatus(product) {
+    const nextIsActive = product.isActive === false;
+
+    try {
+      await updateDoc(doc(db, "storeProducts", product.id), {
+        isActive: nextIsActive,
+        updatedAt: serverTimestamp(),
+      });
+
+      await writeAuditLog(db, {
+        action: nextIsActive ? "Store product reactivated" : "Store product deactivated",
+        entityType: "storeProduct",
+        entityId: product.id,
+        storeId: store.id,
+        storeName: store.name,
+        description: `${nextIsActive ? "Reactivated" : "Deactivated"} ${product.productName} in ${store.name}`,
+        metadata: {
+          productName: product.productName,
+          isActive: nextIsActive,
+        },
+        currentUser,
+        userProfile,
+      });
+
+      setProducts((prev) =>
+        prev.map((entry) =>
+          entry.id === product.id
+            ? {
+                ...entry,
+                isActive: nextIsActive,
+              }
+            : entry
+        )
+      );
+    } catch (err) {
+      console.error("Failed to update product status:", err);
+    }
+  }
 
   const typeConfig = {
     RECEIVE: { bg: "bg-green-100", text: "text-green-700", dot: "bg-green-500" },
@@ -247,26 +308,54 @@ export default function StoreDetailPage() {
                       <th className="text-right px-6 py-3.5 font-medium text-gray-500 text-xs uppercase tracking-wider">Qty</th>
                       <th className="text-left px-6 py-3.5 font-medium text-gray-500 text-xs uppercase tracking-wider">Unit</th>
                       <th className="text-left px-6 py-3.5 font-medium text-gray-500 text-xs uppercase tracking-wider">Status</th>
+                      <th className="text-right px-6 py-3.5 font-medium text-gray-500 text-xs uppercase tracking-wider">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
                     {products.map((product) => {
+                      const isActive = product.isActive !== false;
                       const status =
-                        product.quantityOnHand <= 0
+                        !isActive
+                          ? { label: "Inactive", color: "bg-gray-100 text-gray-600" }
+                          : product.quantityOnHand <= 0
                           ? { label: "Out of Stock", color: "bg-red-100 text-red-700" }
                           : product.reorderLevel && product.quantityOnHand <= product.reorderLevel
                           ? { label: "Low Stock", color: "bg-amber-100 text-amber-700" }
                           : { label: "In Stock", color: "bg-green-100 text-green-700" };
                       return (
-                        <tr key={product.id} className="hover:bg-gray-50/50 transition-colors">
+                        <tr key={product.id} className={`hover:bg-gray-50/50 transition-colors ${!isActive ? "opacity-70" : ""}`}>
                           <td className="px-6 py-4 font-medium text-gray-900">{product.productName}</td>
-                          <td className="px-6 py-4 text-gray-500">{product.categoryId || "—"}</td>
+                          <td className="px-6 py-4 text-gray-500">{getCategoryName(product.categoryId)}</td>
                           <td className="px-6 py-4 text-right font-semibold text-gray-900">{product.quantityOnHand}</td>
                           <td className="px-6 py-4 text-gray-500">{product.unit}</td>
                           <td className="px-6 py-4">
                             <span className={`inline-flex px-2.5 py-1 text-xs font-medium rounded-full ${status.color}`}>
                               {status.label}
                             </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center justify-end gap-2">
+                              <button
+                                type="button"
+                                onClick={() => openEditModal(product)}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 text-xs font-medium transition-colors"
+                              >
+                                <PencilLine size={13} />
+                                Edit
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => openToggleProductStatusModal(product)}
+                                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                                  isActive
+                                    ? "border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100"
+                                    : "border border-green-200 bg-green-50 text-green-700 hover:bg-green-100"
+                                }`}
+                              >
+                                {isActive ? <ToggleLeft size={13} /> : <ToggleRight size={13} />}
+                                {isActive ? "Deactivate" : "Activate"}
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       );
@@ -391,11 +480,47 @@ export default function StoreDetailPage() {
           onClose={() => setShowUploadModal(false)}
         />
       )}
+      {showEditModal && selectedProduct && (
+        <EditProductModal
+          store={store}
+          categories={categories}
+          product={selectedProduct}
+          onClose={() => {
+            setShowEditModal(false);
+            setSelectedProduct(null);
+          }}
+          onSaved={(updatedProduct) => {
+            setProducts((prev) => prev.map((entry) => (entry.id === updatedProduct.id ? updatedProduct : entry)));
+            setShowEditModal(false);
+            setSelectedProduct(null);
+          }}
+        />
+      )}
+      {showStatusModal && selectedStatusProduct && (
+        <ConfirmActionModal
+          open={showStatusModal}
+          title={`${selectedStatusProduct.isActive === false ? "Activate" : "Deactivate"} product`}
+          description={`${selectedStatusProduct.isActive === false ? "Reactivate" : "Deactivate"} "${selectedStatusProduct.productName}" in ${store.name}?`}
+          confirmLabel={selectedStatusProduct.isActive === false ? "Activate" : "Deactivate"}
+          tone={selectedStatusProduct.isActive === false ? "success" : "warning"}
+          onCancel={() => {
+            setShowStatusModal(false);
+            setSelectedStatusProduct(null);
+          }}
+          onConfirm={async () => {
+            if (!selectedStatusProduct) return;
+            await handleToggleProductStatus(selectedStatusProduct);
+            setShowStatusModal(false);
+            setSelectedStatusProduct(null);
+          }}
+        />
+      )}
     </Layout>
   );
 }
 
 function AddProductModal({ store, categories, onClose }) {
+  const { currentUser, userProfile } = useAuth();
   const [formData, setFormData] = useState({
     name: "",
     categoryId: "",
@@ -436,7 +561,7 @@ function AddProductModal({ store, categories, onClose }) {
         productId = existingSnap.docs[0].id;
       }
 
-      await addDoc(collection(db, "storeProducts"), {
+      const storeProductRef = await addDoc(collection(db, "storeProducts"), {
         storeId: store.id,
         productId,
         productName: formData.name.trim(),
@@ -452,6 +577,22 @@ function AddProductModal({ store, categories, onClose }) {
         isActive: true,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
+      });
+      await writeAuditLog(db, {
+        action: "Store product created",
+        entityType: "storeProduct",
+        entityId: storeProductRef.id,
+        storeId: store.id,
+        storeName: store.name,
+        description: `Added ${formData.name.trim()} to ${store.name}`,
+        metadata: {
+          categoryId: formData.categoryId,
+          quantity: parseInt(formData.quantity) || 0,
+          unitCost: parseFloat(formData.unitCost) || 0,
+          productMasterCreated: existingSnap.empty,
+        },
+        currentUser,
+        userProfile,
       });
 
       onClose();
@@ -604,6 +745,7 @@ function AddProductModal({ store, categories, onClose }) {
 }
 
 function UploadProductsModal({ store, categories, onClose }) {
+  const { currentUser, userProfile } = useAuth();
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState([]);
   const [errors, setErrors] = useState([]);
@@ -679,6 +821,7 @@ function UploadProductsModal({ store, categories, onClose }) {
     setError("");
 
     try {
+      const importedItems = [];
       for (const item of preview) {
         const normalizedName = item.name.toLowerCase();
         const productsRef = collection(db, "products");
@@ -703,6 +846,12 @@ function UploadProductsModal({ store, categories, onClose }) {
           productId = existingSnap.docs[0].id;
         }
 
+        importedItems.push({
+          productName: item.name,
+          quantity: item.quantity,
+          unit: item.unit,
+        });
+
         await addDoc(collection(db, "storeProducts"), {
           storeId: store.id,
           productId,
@@ -722,6 +871,18 @@ function UploadProductsModal({ store, categories, onClose }) {
         });
       }
 
+      await writeAuditLog(db, {
+        action: "Products imported",
+        entityType: "storeProduct",
+        storeId: store.id,
+        storeName: store.name,
+        description: `Imported ${importedItems.length} product(s) into ${store.name}`,
+        metadata: {
+          importedItems,
+        },
+        currentUser,
+        userProfile,
+      });
       onClose();
       window.location.reload();
     } catch (err) {
@@ -907,6 +1068,222 @@ function UploadProductsModal({ store, categories, onClose }) {
             </button>
           )}
         </div>
+      </div>
+    </div>
+  );
+}
+
+function formatDateInput(value) {
+  if (!value) return "";
+  const date = typeof value?.toDate === "function" ? value.toDate() : new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toISOString().slice(0, 10);
+}
+
+function EditProductModal({ store, categories, product, onClose, onSaved }) {
+  const { currentUser, userProfile } = useAuth();
+  const [formData, setFormData] = useState({
+    categoryId: product.categoryId || "",
+    unit: product.unit || "",
+    reorderLevel: product.reorderLevel ?? 0,
+    batchNumber: product.batchNumber || "",
+    expiryDate: formatDateInput(product.expiryDate),
+    locationNote: product.locationNote || "",
+    isActive: product.isActive !== false,
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+
+    try {
+      const updates = {
+        categoryId: formData.categoryId,
+        unit: formData.unit,
+        reorderLevel: parseInt(formData.reorderLevel, 10) || 0,
+        batchNumber: formData.batchNumber.trim(),
+        expiryDate: formData.expiryDate ? new Date(formData.expiryDate) : null,
+        locationNote: formData.locationNote.trim(),
+        isActive: formData.isActive,
+        updatedAt: serverTimestamp(),
+      };
+
+      await updateDoc(doc(db, "storeProducts", product.id), updates);
+
+      await writeAuditLog(db, {
+        action: "Store product updated",
+        entityType: "storeProduct",
+        entityId: product.id,
+        storeId: store.id,
+        storeName: store.name,
+        description: `Updated ${product.productName} in ${store.name}`,
+        metadata: {
+          productName: product.productName,
+          updates: {
+            categoryId: formData.categoryId,
+            unit: formData.unit,
+            reorderLevel: parseInt(formData.reorderLevel, 10) || 0,
+            batchNumber: formData.batchNumber.trim(),
+            expiryDate: formData.expiryDate || null,
+            locationNote: formData.locationNote.trim(),
+            isActive: formData.isActive,
+          },
+        },
+        currentUser,
+        userProfile,
+      });
+
+      onSaved({
+        ...product,
+        ...updates,
+      });
+    } catch (err) {
+      setError("Failed to update product. Please try again.");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn">
+      <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl">
+        <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white rounded-t-2xl z-10">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900">Edit Product</h2>
+            <p className="text-sm text-gray-500 mt-0.5">
+              {product.productName} in {store.name}
+            </p>
+          </div>
+          <button onClick={onClose} className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+            <X size={18} />
+          </button>
+        </div>
+
+        {error && (
+          <div className="mx-6 mt-4 p-3 bg-red-50 border border-red-100 text-red-700 text-sm rounded-lg">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Category</label>
+            <select
+              value={formData.categoryId}
+              onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
+              className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50"
+            >
+              <option value="">Select category</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Unit <span className="text-red-500">*</span></label>
+              <select
+                value={formData.unit}
+                onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
+                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50"
+                required
+              >
+                <option value="">Select unit</option>
+                {["Unit", "Box", "Pack", "Carton", "Bottle", "Bag", "Piece", "Kg", "Litre", "Gallon", "Roll", "Tablet", "Vial", "Sachet"].map((unit) => (
+                  <option key={unit} value={unit}>
+                    {unit}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Reorder Level</label>
+              <input
+                type="number"
+                min="0"
+                value={formData.reorderLevel}
+                onChange={(e) => setFormData({ ...formData, reorderLevel: e.target.value })}
+                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Batch Number</label>
+              <input
+                type="text"
+                value={formData.batchNumber}
+                onChange={(e) => setFormData({ ...formData, batchNumber: e.target.value })}
+                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Expiry Date</label>
+              <input
+                type="date"
+                value={formData.expiryDate}
+                onChange={(e) => setFormData({ ...formData, expiryDate: e.target.value })}
+                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Location Note</label>
+            <textarea
+              value={formData.locationNote}
+              onChange={(e) => setFormData({ ...formData, locationNote: e.target.value })}
+              rows={3}
+              className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50 resize-none"
+              placeholder="Optional location details"
+            />
+          </div>
+
+          <label className="flex items-center justify-between gap-4 p-3 rounded-lg border border-gray-200 bg-gray-50/50">
+            <div>
+              <p className="text-sm font-medium text-gray-900">Active status</p>
+              <p className="text-xs text-gray-500">Inactive products stay visible but cannot be used for new stock actions.</p>
+            </div>
+            <input
+              type="checkbox"
+              checked={formData.isActive}
+              onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+              className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+            />
+          </label>
+
+          <div className="flex gap-3 pt-4 border-t border-gray-100">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex-1 px-4 py-2.5 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-lg text-sm font-semibold hover:from-primary-700 hover:to-primary-800 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+            >
+              {loading ? (
+                <>
+                  <Loader2 size={14} className="animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save Changes"
+              )}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
