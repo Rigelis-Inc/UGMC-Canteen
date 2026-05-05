@@ -1,17 +1,25 @@
 import { useState, useEffect } from "react";
-import { collection, getDocs, setDoc, serverTimestamp, doc } from "firebase/firestore";
+import { collection, getDocs, setDoc, serverTimestamp, doc, updateDoc } from "firebase/firestore";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth, db } from "../../config/firebase";
-import { Plus, X, Users, Loader2, Search } from "lucide-react";
+import { useAuth } from "../../contexts/AuthContext";
+import { writeAuditLog } from "../../lib/audit";
+import { Plus, X, Users, Loader2, Search, PencilLine, ToggleLeft, ToggleRight } from "lucide-react";
 import Layout from "../../components/layout/Layout";
+import ConfirmActionModal from "../../components/common/ConfirmActionModal";
 
 const ROLES = ["SUPER_ADMIN", "ADMIN", "STORE_MANAGER", "STORE_OFFICER", "SUPERVISOR", "AUDITOR"];
 
 export default function UsersPage() {
+  const { currentUser, userProfile } = useAuth();
   const [users, setUsers] = useState([]);
   const [stores, setStores] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [showStatusModal, setShowStatusModal] = useState(false);
+  const [selectedStatusUser, setSelectedStatusUser] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
@@ -40,6 +48,57 @@ export default function UsersPage() {
     SUPERVISOR: "bg-violet-100 text-violet-700",
     AUDITOR: "bg-gray-100 text-gray-700",
   };
+
+  function openEditModal(user) {
+    setSelectedUser(user);
+    setShowEditModal(true);
+  }
+
+  function openToggleUserStatusModal(user) {
+    if (user.id === currentUser?.uid) {
+      alert("You cannot deactivate your own account.");
+      return;
+    }
+
+    setSelectedStatusUser(user);
+    setShowStatusModal(true);
+  }
+
+  async function toggleUserStatus(user) {
+    const nextIsActive = user.isActive === false;
+
+    try {
+      await updateDoc(doc(db, "users", user.id), {
+        isActive: nextIsActive,
+        updatedAt: serverTimestamp(),
+      });
+      await writeAuditLog(db, {
+        action: nextIsActive ? "User reactivated" : "User deactivated",
+        entityType: "user",
+        entityId: user.id,
+        description: `${nextIsActive ? "Reactivated" : "Deactivated"} user ${user.fullName}`,
+        metadata: {
+          fullName: user.fullName,
+          email: user.email,
+          isActive: nextIsActive,
+        },
+        currentUser,
+        userProfile,
+      });
+      setUsers((prev) =>
+        prev.map((entry) =>
+          entry.id === user.id
+            ? {
+                ...entry,
+                isActive: nextIsActive,
+              }
+            : entry
+        )
+      );
+    } catch (err) {
+      console.error("Error updating user status:", err);
+    }
+  }
 
   return (
     <Layout>
@@ -97,11 +156,12 @@ export default function UsersPage() {
                   <th className="text-left px-6 py-3.5 font-medium text-gray-500 text-xs uppercase tracking-wider">Role</th>
                   <th className="text-left px-6 py-3.5 font-medium text-gray-500 text-xs uppercase tracking-wider">Stores</th>
                   <th className="text-left px-6 py-3.5 font-medium text-gray-500 text-xs uppercase tracking-wider">Status</th>
+                  <th className="text-right px-6 py-3.5 font-medium text-gray-500 text-xs uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {filtered.map((user) => (
-                  <tr key={user.id} className="hover:bg-gray-50/50 transition-colors">
+                  <tr key={user.id} className={`hover:bg-gray-50/50 transition-colors ${user.isActive === false ? "opacity-70" : ""}`}>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-gradient-to-br from-slate-500 to-slate-600 flex items-center justify-center flex-shrink-0">
@@ -130,6 +190,31 @@ export default function UsersPage() {
                         {user.isActive !== false ? "Active" : "Inactive"}
                       </span>
                     </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          type="button"
+                          onClick={() => openEditModal(user)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 text-xs font-medium transition-colors"
+                        >
+                          <PencilLine size={13} />
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => openToggleUserStatusModal(user)}
+                          disabled={user.id === currentUser?.uid}
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
+                            user.isActive !== false
+                              ? "border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100"
+                              : "border border-green-200 bg-green-50 text-green-700 hover:bg-green-100"
+                          }`}
+                        >
+                          {user.isActive !== false ? <ToggleLeft size={13} /> : <ToggleRight size={13} />}
+                          {user.isActive !== false ? "Deactivate" : "Activate"}
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -139,11 +224,46 @@ export default function UsersPage() {
       </div>
 
       {showAddModal && <AddUserModal stores={stores} onClose={() => setShowAddModal(false)} />}
+      {showEditModal && selectedUser && (
+        <EditUserModal
+          user={selectedUser}
+          stores={stores}
+          onClose={() => {
+            setShowEditModal(false);
+            setSelectedUser(null);
+          }}
+          onSaved={(updatedUser) => {
+            setUsers((prev) => prev.map((entry) => (entry.id === updatedUser.id ? updatedUser : entry)));
+            setShowEditModal(false);
+            setSelectedUser(null);
+          }}
+        />
+      )}
+      {showStatusModal && selectedStatusUser && (
+        <ConfirmActionModal
+          open={showStatusModal}
+          title={`${selectedStatusUser.isActive === false ? "Activate" : "Deactivate"} user`}
+          description={`${selectedStatusUser.isActive === false ? "Reactivate" : "Deactivate"} "${selectedStatusUser.fullName}"?`}
+          confirmLabel={selectedStatusUser.isActive === false ? "Activate" : "Deactivate"}
+          tone={selectedStatusUser.isActive === false ? "success" : "warning"}
+          onCancel={() => {
+            setShowStatusModal(false);
+            setSelectedStatusUser(null);
+          }}
+          onConfirm={async () => {
+            if (!selectedStatusUser) return;
+            await toggleUserStatus(selectedStatusUser);
+            setShowStatusModal(false);
+            setSelectedStatusUser(null);
+          }}
+        />
+      )}
     </Layout>
   );
 }
 
 function AddUserModal({ stores, onClose }) {
+  const { currentUser, userProfile } = useAuth();
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -170,6 +290,18 @@ function AddUserModal({ stores, onClose }) {
         isActive: true,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
+      });
+      await writeAuditLog(db, {
+        action: "User created",
+        entityType: "user",
+        entityId: userCredential.user.uid,
+        description: `Created user ${formData.fullName} (${formData.email})`,
+        metadata: {
+          role: formData.role,
+          assignedStores: formData.assignedStores,
+        },
+        currentUser,
+        userProfile,
       });
       onClose();
       window.location.reload();
@@ -303,5 +435,196 @@ function AddUserModal({ stores, onClose }) {
       </div>
     </div>
     </Layout>
+  );
+}
+
+function EditUserModal({ user, stores, onClose, onSaved }) {
+  const { currentUser, userProfile } = useAuth();
+  const [formData, setFormData] = useState({
+    fullName: user.fullName || "",
+    phone: user.phone || "",
+    role: user.role || "STORE_OFFICER",
+    assignedStores: user.assignedStores || [],
+    isActive: user.isActive !== false,
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  function toggleStore(storeId) {
+    setFormData((prev) => {
+      const current = prev.assignedStores;
+      return current.includes(storeId)
+        ? { ...prev, assignedStores: current.filter((id) => id !== storeId) }
+        : { ...prev, assignedStores: [...current, storeId] };
+    });
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+
+    try {
+      if (user.id === currentUser?.uid && formData.isActive === false) {
+        throw new Error("You cannot deactivate your own account.");
+      }
+
+      const updates = {
+        fullName: formData.fullName.trim(),
+        phone: formData.phone.trim(),
+        role: formData.role,
+        assignedStores: formData.assignedStores,
+        isActive: formData.isActive,
+        updatedAt: serverTimestamp(),
+      };
+
+      await updateDoc(doc(db, "users", user.id), updates);
+      await writeAuditLog(db, {
+        action: "User updated",
+        entityType: "user",
+        entityId: user.id,
+        description: `Updated user ${user.fullName}`,
+        metadata: {
+          fullName: updates.fullName,
+          phone: updates.phone,
+          role: updates.role,
+          assignedStores: updates.assignedStores,
+          isActive: updates.isActive,
+        },
+        currentUser,
+        userProfile,
+      });
+
+      onSaved({
+        ...user,
+        ...updates,
+      });
+    } catch (err) {
+      setError(err.message || "Failed to update user.");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn">
+      <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl">
+        <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900">Edit User</h2>
+            <p className="text-sm text-gray-500 mt-0.5">{user.email}</p>
+          </div>
+          <button onClick={onClose} className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+            <X size={18} />
+          </button>
+        </div>
+
+        {error && (
+          <div className="mx-6 mt-4 p-3 bg-red-50 border border-red-100 text-red-700 text-sm rounded-lg">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Full Name</label>
+            <input
+              type="text"
+              value={formData.fullName}
+              onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+              className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50"
+              required
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Phone</label>
+              <input
+                type="text"
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Status</label>
+              <select
+                value={formData.isActive ? "active" : "inactive"}
+                onChange={(e) => setFormData({ ...formData, isActive: e.target.value === "active" })}
+                disabled={user.id === currentUser?.uid}
+                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50 disabled:opacity-60"
+              >
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Role</label>
+            <select
+              value={formData.role}
+              onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+              className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50"
+            >
+              {ROLES.map((r) => (
+                <option key={r} value={r}>
+                  {r.replace(/_/g, " ")}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Assigned Stores</label>
+            <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
+              {stores.map((store) => (
+                <label key={store.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.assignedStores.includes(store.id)}
+                    onChange={() => toggleStore(store.id)}
+                    className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                  />
+                  <span className="text-sm text-gray-700">{store.name}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {user.id === currentUser?.uid && (
+            <div className="p-3 rounded-lg border border-amber-200 bg-amber-50 text-amber-800 text-sm">
+              Your own account status is locked to prevent accidental lockout.
+            </div>
+          )}
+
+          <div className="flex gap-3 pt-4 border-t border-gray-100">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex-1 px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-semibold disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+            >
+              {loading ? (
+                <>
+                  <Loader2 size={14} className="animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save Changes"
+              )}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 }

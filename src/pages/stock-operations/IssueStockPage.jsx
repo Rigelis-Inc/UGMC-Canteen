@@ -1,9 +1,12 @@
 import { useState, useEffect, useRef } from "react";
-import { collection, getDocs, addDoc, serverTimestamp, doc, updateDoc, writeBatch } from "firebase/firestore";
+import { collection, doc, getDocs, runTransaction, serverTimestamp } from "firebase/firestore";
 import { db } from "../../config/firebase";
 import { useAuth } from "../../contexts/AuthContext";
+import { writeAuditLog } from "../../lib/audit";
 import { ArrowUpToLine, Loader2, CheckCircle2, AlertCircle, Search, ChevronDown, X, Package, Plus, Trash2, Minus } from "lucide-react";
 import Layout from "../../components/layout/Layout";
+
+const INITIAL_REFERENCE_NUMBER = `ISS-${Date.now()}`;
 
 export default function IssueStockPage() {
   const { userProfile, assignedStores, currentUser } = useAuth();
@@ -17,7 +20,7 @@ export default function IssueStockPage() {
     storeId: "",
     recipientId: "",
     note: "",
-    referenceNumber: `ISS-${Date.now()}`,
+    referenceNumber: INITIAL_REFERENCE_NUMBER,
   });
   const [items, setItems] = useState([]);
   const [productSearch, setProductSearch] = useState("");
@@ -92,6 +95,12 @@ export default function IssueStockPage() {
     setError("");
     setSuccess("");
 
+    if (!formData.storeId) {
+      setError("Please select a store.");
+      setLoading(false);
+      return;
+    }
+
     if (!formData.recipientId) {
       setError("Please select a recipient.");
       setLoading(false);
@@ -112,59 +121,90 @@ export default function IssueStockPage() {
     }
 
     try {
-      const batch = writeBatch(db);
       const recipient = recipients.find((r) => r.id === formData.recipientId);
       const store = stores.find((s) => s.id === formData.storeId);
+      const referenceNumber = formData.referenceNumber || `ISS-${Date.now()}`;
 
-      for (const item of items) {
-        const product = products.find((p) => p.id === item.productId);
-        const currentQty = product?.quantityOnHand || 0;
-        const quantity = parseInt(item.quantity);
-        const newQty = currentQty - quantity;
+      await runTransaction(db, async (transaction) => {
+        for (const item of items) {
+          const quantity = parseInt(item.quantity);
+          const unitCost = parseFloat(item.unitCost) || 0;
+          const spRef = doc(db, "storeProducts", item.productId);
+          const spSnap = await transaction.get(spRef);
 
-        const movementRef = doc(collection(db, "stockMovements"));
-        batch.set(movementRef, {
-          type: "ISSUE",
-          storeId: formData.storeId,
-          storeName: store?.name || "",
-          productId: product?.productId || item.productId,
-          storeProductId: item.productId,
-          productName: item.productName,
-          quantity,
-          previousQuantity: currentQty,
-          newQuantity: newQty,
-          unit: item.unit,
-          supplierId: null,
-          supplierName: null,
+          if (!spSnap.exists()) {
+            throw new Error(`Missing stock record for ${item.productName}.`);
+          }
+
+          const currentData = spSnap.data();
+          const currentQty = currentData.quantityOnHand || 0;
+          if (quantity > currentQty) {
+            throw new Error(`"${item.productName}" exceeds available stock (${currentQty} ${item.unit}).`);
+          }
+
+          const newQty = currentQty - quantity;
+
+          transaction.update(spRef, {
+            quantityOnHand: newQty,
+            totalValue: unitCost * newQty,
+            updatedAt: serverTimestamp(),
+          });
+
+          const movementRef = doc(collection(db, "stockMovements"));
+          transaction.set(movementRef, {
+            type: "ISSUE",
+            storeId: formData.storeId,
+            storeName: store?.name || "",
+            productId: currentData.productId || item.productId,
+            storeProductId: item.productId,
+            productName: item.productName,
+            quantity,
+            previousQuantity: currentQty,
+            newQuantity: newQty,
+            unit: item.unit,
+            supplierId: null,
+            supplierName: null,
+            recipientId: formData.recipientId,
+            recipientName: recipient?.name || "",
+            fromStoreId: null,
+            toStoreId: null,
+            batchNumber: currentData.batchNumber || "",
+            expiryDate: currentData.expiryDate || null,
+            unitCost,
+            totalCost: unitCost * quantity,
+            note: formData.note || "",
+            referenceNumber,
+            documentUrl: null,
+            status: "COMPLETED",
+            performedBy: currentUser?.uid || "",
+            performedByName: userProfile?.fullName || "",
+            approvedBy: null,
+            approvedByName: null,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+          });
+        }
+      });
+      await writeAuditLog(db, {
+        action: "Stock issued",
+        entityType: "stockMovement",
+        storeId: formData.storeId,
+        storeName: store?.name || "",
+        description: `Issued ${items.length} item(s) to ${recipient?.name || "recipient"}`,
+        metadata: {
+          referenceNumber,
           recipientId: formData.recipientId,
           recipientName: recipient?.name || "",
-          fromStoreId: null,
-          toStoreId: null,
-          batchNumber: product?.batchNumber || "",
-          expiryDate: product?.expiryDate || null,
-          unitCost: item.unitCost || 0,
-          totalCost: (item.unitCost || 0) * quantity,
-          note: formData.note || "",
-          referenceNumber: formData.referenceNumber || `ISS-${Date.now()}`,
-          documentUrl: null,
-          status: "COMPLETED",
-          performedBy: currentUser?.uid || "",
-          performedByName: userProfile?.fullName || "",
-          approvedBy: null,
-          approvedByName: null,
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
-        });
-
-        const spRef = doc(db, "storeProducts", item.productId);
-        batch.update(spRef, {
-          quantityOnHand: newQty,
-          totalValue: (item.unitCost || 0) * newQty,
-          updatedAt: serverTimestamp(),
-        });
-      }
-
-      await batch.commit();
+          items: items.map((item) => ({
+            productId: item.productId,
+            productName: item.productName,
+            quantity: parseInt(item.quantity),
+            unit: item.unit,
+          })),
+        },
+        currentUser,
+        userProfile,
+      });
 
       setSuccess(`${items.length} item(s) issued successfully!`);
       setItems([]);
