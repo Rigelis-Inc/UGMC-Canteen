@@ -90,6 +90,9 @@ export default function LoginPage() {
             <div className="w-20 h-px bg-white/20 mt-10 mb-8" />
             <p className="text-primary-100/50 text-lg tracking-wide">Inventory Management System</p>
           </div>
+
+          {/* Bottom */}
+          <p className="text-primary-200/40 text-xs">&copy; {new Date().getFullYear()} UGMC Canteen</p>
         </div>
       </div>
 
@@ -257,10 +260,6 @@ export default function LoginPage() {
                   ) : "Sign in"}
                 </button>
               </form>
-
-              <p className="text-center text-xs text-slate-600 mt-10">
-                &copy; {new Date().getFullYear()} UGMC Canteen
-              </p>
             </div>
           )}
         </div>
