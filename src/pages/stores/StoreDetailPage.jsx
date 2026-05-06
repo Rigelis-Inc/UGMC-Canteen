@@ -223,22 +223,22 @@ export default function StoreDetailPage() {
       </div>
 
       <div className="animate-fadeIn">
-        <div className="border-b border-gray-200 mb-6">
-          <nav className="flex gap-1">
+        <div className="mb-6">
+          <div className="inline-flex items-center border border-gray-200 bg-transparent px-1 py-1.5 rounded-2xl">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                className={`rounded-xl px-4 py-3 text-sm font-medium transition-all ${
                   activeTab === tab.id
-                    ? "border-primary-600 text-primary-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                    ? "bg-primary-600 text-white"
+                    : "text-gray-500 hover:text-gray-700"
                 }`}
               >
                 {tab.label}
               </button>
             ))}
-          </nav>
+          </div>
         </div>
 
         {activeTab === "overview" && (
