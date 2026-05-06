@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { AlertTriangle, X } from "lucide-react";
+import { AlertTriangle, X, Loader2 } from "lucide-react";
 
 export default function ConfirmActionModal({
   open,
@@ -8,6 +8,7 @@ export default function ConfirmActionModal({
   confirmLabel = "Confirm",
   cancelLabel = "Cancel",
   tone = "warning",
+  loading = false,
   onConfirm,
   onCancel,
 }) {
@@ -61,7 +62,8 @@ export default function ConfirmActionModal({
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+            disabled={loading}
+            className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 disabled:opacity-50"
             aria-label="Close dialog"
           >
             <X size={18} />
@@ -72,16 +74,28 @@ export default function ConfirmActionModal({
           <button
             type="button"
             onClick={onCancel}
-            className="flex-1 rounded-lg border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+            disabled={loading}
+            className="flex-1 rounded-lg border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
           >
             {cancelLabel}
           </button>
           <button
             type="button"
             onClick={onConfirm}
-            className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition-colors focus:outline-none focus:ring-4 ${confirmButtonStyles}`}
+            disabled={loading}
+            className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition-all focus:outline-none focus:ring-4 disabled:opacity-80 disabled:cursor-wait ${confirmButtonStyles}`}
           >
-            {confirmLabel}
+            {loading ? (
+              <span className="inline-flex items-center justify-center gap-2">
+                <Loader2 size={14} className="animate-spin" />
+                <span className="relative inline-flex h-2 w-2 overflow-hidden rounded-full bg-white/60">
+                  <span className="absolute inset-0 -translate-x-full animate-[shimmer_1s_infinite] bg-gradient-to-r from-transparent via-white/80 to-transparent" />
+                </span>
+                Processing…
+              </span>
+            ) : (
+              confirmLabel
+            )}
           </button>
         </div>
       </div>
