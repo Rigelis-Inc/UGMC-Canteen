@@ -16,6 +16,7 @@ export default function SuppliersPage() {
   const [selectedSupplier, setSelectedSupplier] = useState(null);
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [selectedStatusSupplier, setSelectedStatusSupplier] = useState(null);
+  const [statusLoading, setStatusLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
@@ -48,6 +49,7 @@ export default function SuppliersPage() {
   }
 
   async function toggleSupplierStatus(supplier) {
+    setStatusLoading(true);
     const nextIsActive = supplier.isActive === false;
 
     try {
@@ -79,6 +81,8 @@ export default function SuppliersPage() {
       );
     } catch (err) {
       console.error("Error updating supplier status:", err);
+    } finally {
+      setStatusLoading(false);
     }
   }
 
@@ -209,6 +213,7 @@ export default function SuppliersPage() {
           description={`${selectedStatusSupplier.isActive === false ? "Reactivate" : "Deactivate"} "${selectedStatusSupplier.name}"?`}
           confirmLabel={selectedStatusSupplier.isActive === false ? "Activate" : "Deactivate"}
           tone={selectedStatusSupplier.isActive === false ? "success" : "warning"}
+          loading={statusLoading}
           onCancel={() => {
             setShowStatusModal(false);
             setSelectedStatusSupplier(null);
