@@ -18,6 +18,7 @@ export default function RecipientsPage() {
   const [selectedRecipient, setSelectedRecipient] = useState(null);
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [selectedStatusRecipient, setSelectedStatusRecipient] = useState(null);
+  const [statusLoading, setStatusLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
@@ -58,6 +59,7 @@ export default function RecipientsPage() {
   }
 
   async function toggleRecipientStatus(recipient) {
+    setStatusLoading(true);
     const nextIsActive = recipient.isActive === false;
 
     try {
@@ -89,6 +91,8 @@ export default function RecipientsPage() {
       );
     } catch (err) {
       console.error("Error updating recipient status:", err);
+    } finally {
+      setStatusLoading(false);
     }
   }
 
@@ -223,6 +227,7 @@ export default function RecipientsPage() {
           description={`${selectedStatusRecipient.isActive === false ? "Reactivate" : "Deactivate"} "${selectedStatusRecipient.name}"?`}
           confirmLabel={selectedStatusRecipient.isActive === false ? "Activate" : "Deactivate"}
           tone={selectedStatusRecipient.isActive === false ? "success" : "warning"}
+          loading={statusLoading}
           onCancel={() => {
             setShowStatusModal(false);
             setSelectedStatusRecipient(null);
