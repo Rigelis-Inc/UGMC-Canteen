@@ -33,3 +33,42 @@ test("storage rules deny access by default", async () => {
   assert.match(rules, /allow read, write:\s*if false;/);
   assert.doesNotMatch(rules, /allow read, write:\s*if request\.auth != null;/);
 });
+
+test("firestore rules allow public read of active menu items", async () => {
+  const rules = await readProjectFile("firestore.rules");
+  assert.match(rules, /match \/menuItems\/\{itemId\}/);
+  assert.match(rules, /resource\.data\.isActive == true/);
+  assert.match(rules, /canManageMenu\(\)/);
+});
+
+test("firestore rules allow public create of food orders but not read", async () => {
+  const rules = await readProjectFile("firestore.rules");
+  assert.match(rules, /match \/foodOrders\/\{orderId\}/);
+  assert.match(rules, /allow create: if request\.resource\.data\.customerName is string/);
+  assert.match(rules, /allow read: if signedIn\(\) && canViewOrders\(\)/);
+  assert.match(rules, /allow update: if signedIn\(\) && canManageOrders\(\)/);
+});
+
+test("firestore rules protect orderStatusLogs from modification", async () => {
+  const rules = await readProjectFile("firestore.rules");
+  assert.match(rules, /match \/orderStatusLogs\/\{logId\}/);
+  assert.match(rules, /allow update, delete: if false;/);
+});
+
+test("firestore rules allow public read of order settings", async () => {
+  const rules = await readProjectFile("firestore.rules");
+  assert.match(rules, /settingId == "orderSettings"/);
+});
+
+test("firestore rules allow public read of publicOrderTracking", async () => {
+  const rules = await readProjectFile("firestore.rules");
+  assert.match(rules, /match \/publicOrderTracking\/\{trackingId\}/);
+  assert.match(rules, /allow read: if true;/);
+});
+
+test("storage rules allow public read of menu item images", async () => {
+  const rules = await readProjectFile("storage.rules");
+  assert.match(rules, /match \/uploads\/menu-items\/\{itemId\}\/\{fileName\}/);
+  assert.match(rules, /allow read: if true;/);
+  assert.match(rules, /allow write: if request\.auth != null;/);
+});

@@ -18,6 +18,10 @@ const ReportsPage = lazy(() => import("./pages/reports/ReportsPage"));
 const AuditLogsPage = lazy(() => import("./pages/audit-logs/AuditLogsPage"));
 const UsersPage = lazy(() => import("./pages/users/UsersPage"));
 const SettingsPage = lazy(() => import("./pages/settings/SettingsPage"));
+const MenuManagementPage = lazy(() => import("./pages/admin-menu/MenuManagementPage"));
+const OrdersPage = lazy(() => import("./pages/admin-orders/OrdersPage"));
+const OrderDetailPage = lazy(() => import("./pages/admin-orders/OrderDetailPage"));
+const OrderSettingsPage = lazy(() => import("./pages/admin-orders/OrderSettingsPage"));
 
 function ShellLoader() {
   return (
@@ -34,8 +38,9 @@ export default function AppShell() {
   return (
     <Suspense fallback={<ShellLoader />}>
       <Routes>
+        {/* Inventory */}
         <Route
-          path="/dashboard"
+          path="dashboard"
           element={
             <ProtectedRoute requiredPermission="viewDashboard">
               <DashboardPage />
@@ -43,7 +48,7 @@ export default function AppShell() {
           }
         />
         <Route
-          path="/stores"
+          path="stores"
           element={
             <ProtectedRoute requiredPermission="viewDashboard">
               <StoresPage />
@@ -51,7 +56,7 @@ export default function AppShell() {
           }
         />
         <Route
-          path="/stores/:storeId"
+          path="stores/:storeId"
           element={
             <ProtectedRoute requiredPermission="viewDashboard">
               <StoreDetailPage />
@@ -59,7 +64,7 @@ export default function AppShell() {
           }
         />
         <Route
-          path="/products"
+          path="products"
           element={
             <ProtectedRoute requiredPermission="manageProducts">
               <ProductsPage />
@@ -67,7 +72,7 @@ export default function AppShell() {
           }
         />
         <Route
-          path="/receive-stock"
+          path="stock/receive"
           element={
             <ProtectedRoute requiredPermission="receiveStock">
               <ReceiveStockPage />
@@ -75,7 +80,7 @@ export default function AppShell() {
           }
         />
         <Route
-          path="/issue-stock"
+          path="stock/issue"
           element={
             <ProtectedRoute requiredPermission="issueStock">
               <IssueStockPage />
@@ -83,7 +88,7 @@ export default function AppShell() {
           }
         />
         <Route
-          path="/transfer-stock"
+          path="stock/transfer"
           element={
             <ProtectedRoute requiredPermission="transferStock">
               <TransferStockPage />
@@ -91,7 +96,7 @@ export default function AppShell() {
           }
         />
         <Route
-          path="/adjust-stock"
+          path="stock/adjust"
           element={
             <ProtectedRoute requiredPermission="adjustStock">
               <AdjustStockPage />
@@ -99,7 +104,7 @@ export default function AppShell() {
           }
         />
         <Route
-          path="/damage-expiry"
+          path="stock/damage-expiry"
           element={
             <ProtectedRoute requiredPermission="adjustStock">
               <DamageExpiryPage />
@@ -107,15 +112,16 @@ export default function AppShell() {
           }
         />
         <Route
-          path="/stock-movements"
+          path="stock-movements"
           element={
             <ProtectedRoute requiredPermission="viewReports">
               <StockMovementsPage />
             </ProtectedRoute>
           }
         />
+        {/* Management */}
         <Route
-          path="/suppliers"
+          path="suppliers"
           element={
             <ProtectedRoute requiredPermission="manageSuppliers">
               <SuppliersPage />
@@ -123,15 +129,16 @@ export default function AppShell() {
           }
         />
         <Route
-          path="/recipients"
+          path="recipients"
           element={
             <ProtectedRoute requiredPermission="manageRecipients">
               <RecipientsPage />
             </ProtectedRoute>
           }
         />
+        {/* Administration */}
         <Route
-          path="/reports"
+          path="reports"
           element={
             <ProtectedRoute requiredPermission="viewReports">
               <ReportsPage />
@@ -139,7 +146,7 @@ export default function AppShell() {
           }
         />
         <Route
-          path="/audit-logs"
+          path="audit-logs"
           element={
             <ProtectedRoute requiredPermission="viewAuditLogs">
               <AuditLogsPage />
@@ -147,7 +154,7 @@ export default function AppShell() {
           }
         />
         <Route
-          path="/users"
+          path="users"
           element={
             <ProtectedRoute requiredPermission="manageUsers">
               <UsersPage />
@@ -155,15 +162,56 @@ export default function AppShell() {
           }
         />
         <Route
-          path="/settings"
+          path="settings"
           element={
             <ProtectedRoute requiredPermission="manageSettings">
               <SettingsPage />
             </ProtectedRoute>
           }
         />
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        {/* Food Ordering (resolved under /admin/*, no conflict with public /menu) */}
+        <Route
+          path="menu"
+          element={
+            <ProtectedRoute requiredPermission="manageMenuItems">
+              <MenuManagementPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="orders"
+          element={
+            <ProtectedRoute requiredPermission="manageFoodOrders">
+              <OrdersPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="orders/:orderId"
+          element={
+            <ProtectedRoute requiredPermission="manageFoodOrders">
+              <OrderDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="order-settings"
+          element={
+            <ProtectedRoute requiredPermission="manageOrderSettings">
+              <OrderSettingsPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Legacy path redirects */}
+        <Route path="receive-stock" element={<Navigate to="/admin/stock/receive" replace />} />
+        <Route path="issue-stock" element={<Navigate to="/admin/stock/issue" replace />} />
+        <Route path="transfer-stock" element={<Navigate to="/admin/stock/transfer" replace />} />
+        <Route path="adjust-stock" element={<Navigate to="/admin/stock/adjust" replace />} />
+        <Route path="damage-expiry" element={<Navigate to="/admin/stock/damage-expiry" replace />} />
+
+        <Route index element={<Navigate to="/admin/dashboard" replace />} />
+        <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
       </Routes>
     </Suspense>
   );
