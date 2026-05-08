@@ -23,7 +23,7 @@ export default function Layout({ children }) {
   }
 
   return (
-    <div className="min-h-screen bg-slate-100">
+    <div className="min-h-screen bg-slate-100 dark:bg-gray-950 transition-colors duration-200">
       <Sidebar collapsed={collapsed} onToggle={handleToggleSidebar} />
       <main
         className={`transition-all duration-300 ease-in-out pt-16 lg:pt-0 ${

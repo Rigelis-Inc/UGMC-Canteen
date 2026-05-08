@@ -23,6 +23,9 @@ export const ROLE_PERMISSIONS = {
     exportReports: true,
     viewAuditLogs: true,
     manageSettings: true,
+    manageMenuItems: true,
+    manageFoodOrders: true,
+    manageOrderSettings: true,
   },
   [ROLES.ADMIN]: {
     viewDashboard: true,
@@ -39,6 +42,9 @@ export const ROLE_PERMISSIONS = {
     exportReports: true,
     viewAuditLogs: true,
     manageSettings: "limited",
+    manageMenuItems: true,
+    manageFoodOrders: true,
+    manageOrderSettings: true,
   },
   [ROLES.STORE_MANAGER]: {
     viewDashboard: true,
@@ -55,6 +61,9 @@ export const ROLE_PERMISSIONS = {
     exportReports: true,
     viewAuditLogs: "limited",
     manageSettings: false,
+    manageMenuItems: "limited",
+    manageFoodOrders: true,
+    manageOrderSettings: false,
   },
   [ROLES.STORE_OFFICER]: {
     viewDashboard: true,
@@ -71,6 +80,9 @@ export const ROLE_PERMISSIONS = {
     exportReports: "limited",
     viewAuditLogs: false,
     manageSettings: false,
+    manageMenuItems: false,
+    manageFoodOrders: true,
+    manageOrderSettings: false,
   },
   [ROLES.SUPERVISOR]: {
     viewDashboard: true,
@@ -87,6 +99,9 @@ export const ROLE_PERMISSIONS = {
     exportReports: true,
     viewAuditLogs: true,
     manageSettings: false,
+    manageMenuItems: false,
+    manageFoodOrders: true,
+    manageOrderSettings: false,
   },
   [ROLES.AUDITOR]: {
     viewDashboard: true,
@@ -103,6 +118,9 @@ export const ROLE_PERMISSIONS = {
     exportReports: true,
     viewAuditLogs: true,
     manageSettings: false,
+    manageMenuItems: false,
+    manageFoodOrders: "view",
+    manageOrderSettings: false,
   },
 };
 

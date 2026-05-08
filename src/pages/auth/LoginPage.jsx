@@ -27,7 +27,7 @@ export default function LoginPage() {
   }
 
   if (currentUser) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/admin/dashboard" replace />;
   }
 
   async function handleSubmit(e) {
@@ -82,29 +82,26 @@ export default function LoginPage() {
           <div />
 
           {/* Center */}
-
-          {/* Center */}
           <div className="flex flex-col items-center text-center">
-            <h1 className="text-7xl font-bold text-white tracking-tight mb-3">UGMC</h1>
-            <p className="text-3xl font-medium text-primary-200/80 tracking-wide">Canteen</p>
+            <img src="/mayrit_logo.png" alt="Mayrit Cuisines" className="w-48 h-48 object-contain mb-6 drop-shadow-2xl" />
+            <h1 className="text-5xl font-bold text-white tracking-tight mb-2">Mayrit</h1>
+            <p className="text-2xl font-medium text-primary-200/80 tracking-wide">Cuisines</p>
             <div className="w-20 h-px bg-white/20 mt-10 mb-8" />
             <p className="text-primary-100/50 text-lg tracking-wide">Inventory Management System</p>
           </div>
 
           {/* Bottom */}
-          <p className="text-primary-200/40 text-xs">&copy; {new Date().getFullYear()} UGMC Canteen</p>
+          <p className="text-primary-200/40 text-xs">&copy; {new Date().getFullYear()} Mayrit Cuisines</p>
         </div>
       </div>
 
       {/* Right Panel - Form */}
       <div className="flex-1 flex items-center justify-center px-6 py-12 sm:px-12 lg:px-16 relative">
         {/* Mobile top branding */}
-        <div className="lg:hidden absolute top-6 left-6 flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-lg bg-primary-600 flex items-center justify-center shadow-lg shadow-primary-600/30">
-            <span className="text-white font-extrabold text-xs tracking-wider">UG</span>
+          <div className="lg:hidden absolute top-6 left-6 flex items-center gap-2.5">
+            <img src="/mayrit_logo.png" alt="Mayrit Cuisines" className="w-12 h-12 rounded-lg object-contain shadow-lg shadow-primary-600/30" />
+            <p className="text-white font-semibold text-sm">Mayrit Cuisines</p>
           </div>
-          <p className="text-white font-semibold text-sm">UGMC Canteen</p>
-        </div>
 
         <div className="w-full max-w-sm">
           {showReset ? (
@@ -178,9 +175,7 @@ export default function LoginPage() {
             <div className="animate-fadeIn">
               {/* Mobile logo */}
               <div className="lg:hidden flex flex-col items-center mb-8">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center shadow-xl shadow-primary-600/30 mb-3">
-                  <span className="text-white font-extrabold text-sm tracking-wide">UG</span>
-                </div>
+                <img src="/mayrit_logo.png" alt="Mayrit Cuisines" className="w-20 h-20 rounded-xl object-contain shadow-xl shadow-primary-600/30 mb-3" />
               </div>
 
               {/* Desktop heading */}
@@ -260,6 +255,10 @@ export default function LoginPage() {
                   ) : "Sign in"}
                 </button>
               </form>
+
+              <p className="text-center text-xs text-slate-600 mt-10">
+                &copy; {new Date().getFullYear()} Mayrit Cuisines
+              </p>
             </div>
           )}
         </div>
@@ -267,3 +266,4 @@ export default function LoginPage() {
     </div>
   );
 }
+

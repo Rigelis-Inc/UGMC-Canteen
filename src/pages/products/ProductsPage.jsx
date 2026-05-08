@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { collection, getDocs, query, where, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../../config/firebase";
 import { useAuth } from "../../contexts/AuthContext";
-import { writeAuditLog } from "../../lib/audit";
 import { Search, Plus, Filter, X, Package, Loader2, Upload, Download } from "lucide-react";
 import * as XLSX from "xlsx";
 import Layout from "../../components/layout/Layout";
@@ -234,7 +233,6 @@ export default function ProductsPage() {
 }
 
 function AddProductModal({ stores, categories, onClose }) {
-  const { currentUser, userProfile } = useAuth();
   const [formData, setFormData] = useState({
     name: "",
     categoryId: "",
@@ -276,7 +274,7 @@ function AddProductModal({ stores, categories, onClose }) {
         productId = existingSnap.docs[0].id;
       }
 
-      const storeProductRef = await addDoc(collection(db, "storeProducts"), {
+      await addDoc(collection(db, "storeProducts"), {
         storeId: formData.storeId,
         productId,
         productName: formData.name.trim(),
@@ -292,21 +290,6 @@ function AddProductModal({ stores, categories, onClose }) {
         isActive: true,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
-      });
-      await writeAuditLog(db, {
-        action: "Store product created",
-        entityType: "storeProduct",
-        entityId: storeProductRef.id,
-        description: `Added ${formData.name.trim()} to store inventory`,
-        metadata: {
-          storeId: formData.storeId,
-          categoryId: formData.categoryId,
-          quantity: parseInt(formData.quantity) || 0,
-          unitCost: parseFloat(formData.unitCost) || 0,
-          productMasterCreated: existingSnap.empty,
-        },
-        currentUser,
-        userProfile,
       });
 
       onClose();
@@ -474,7 +457,6 @@ function AddProductModal({ stores, categories, onClose }) {
 }
 
 function UploadProductsModal({ stores, categories, onClose }) {
-  const { currentUser, userProfile } = useAuth();
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState([]);
   const [errors, setErrors] = useState([]);
@@ -555,7 +537,6 @@ function UploadProductsModal({ stores, categories, onClose }) {
     setError("");
 
     try {
-      const importedItems = [];
       const batch = [];
       for (const item of preview) {
         const normalizedName = item.name.toLowerCase();
@@ -581,43 +562,28 @@ function UploadProductsModal({ stores, categories, onClose }) {
           productId = existingSnap.docs[0].id;
         }
 
-        importedItems.push({
-          productName: item.name,
-          quantity: item.quantity,
-          unit: item.unit,
-        });
-
-        batch.push(addDoc(collection(db, "storeProducts"), {
-          storeId,
-          productId,
-          productName: item.name,
-          categoryId: categories.find((c) => c.name.toLowerCase() === item.category.toLowerCase())?.id || "",
-          unit: item.unit,
-          quantityOnHand: item.quantity,
-          reorderLevel: item.reorderLevel,
-          batchNumber: item.batchNumber || "",
-          expiryDate: item.expiryDate ? new Date(item.expiryDate) : null,
-          unitCost: item.unitCost,
-          totalValue: item.unitCost * item.quantity,
-          locationNote: "",
-          isActive: true,
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
-        }));
+        batch.push(
+          addDoc(collection(db, "storeProducts"), {
+            storeId,
+            productId,
+            productName: item.name,
+            categoryId: categories.find((c) => c.name.toLowerCase() === item.category.toLowerCase())?.id || "",
+            unit: item.unit,
+            quantityOnHand: item.quantity,
+            reorderLevel: item.reorderLevel,
+            batchNumber: item.batchNumber || "",
+            expiryDate: item.expiryDate ? new Date(item.expiryDate) : null,
+            unitCost: item.unitCost,
+            totalValue: item.unitCost * item.quantity,
+            locationNote: "",
+            isActive: true,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+          })
+        );
       }
 
       await Promise.all(batch);
-      await writeAuditLog(db, {
-        action: "Products imported",
-        entityType: "storeProduct",
-        description: `Imported ${importedItems.length} product(s) into store inventory`,
-        metadata: {
-          storeId,
-          importedItems,
-        },
-        currentUser,
-        userProfile,
-      });
       onClose();
       window.location.reload();
     } catch (err) {
@@ -645,7 +611,7 @@ function UploadProductsModal({ stores, categories, onClose }) {
     const ws = XLSX.utils.json_to_sheet(template);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Products");
-    XLSX.writeFile(wb, "UGMC_Product_Upload_Template.xlsx");
+    XLSX.writeFile(wb, "Mayrit_Product_Upload_Template.xlsx");
   }
 
   return (
@@ -823,3 +789,4 @@ function UploadProductsModal({ stores, categories, onClose }) {
     </Layout>
   );
 }
+
