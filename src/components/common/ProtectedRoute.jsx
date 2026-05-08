@@ -21,7 +21,7 @@ export default function ProtectedRoute({ children, requiredPermission }) {
   }
 
   if (!currentUser) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/admin/login" replace />;
   }
 
   if (!userProfile) {
@@ -62,7 +62,7 @@ export default function ProtectedRoute({ children, requiredPermission }) {
 
   if (requiredPermission) {
     if (!hasPermission(userProfile.role, requiredPermission)) {
-      return <Navigate to="/dashboard" replace />;
+      return <Navigate to="/admin/dashboard" replace />;
     }
   }
 
