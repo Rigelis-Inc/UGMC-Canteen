@@ -1,22 +1,13 @@
 import { useState, useEffect } from "react";
-import { collection, getDocs, addDoc, doc, updateDoc, serverTimestamp } from "firebase/firestore";
+import { collection, getDocs, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../../config/firebase";
-import { useAuth } from "../../contexts/AuthContext";
-import { writeAuditLog } from "../../lib/audit";
-import { Plus, X, Truck, Loader2, Search, PencilLine, ToggleLeft, ToggleRight } from "lucide-react";
+import { Plus, X, Truck, Loader2, Search } from "lucide-react";
 import Layout from "../../components/layout/Layout";
-import ConfirmActionModal from "../../components/common/ConfirmActionModal";
 
 export default function SuppliersPage() {
-  const { currentUser, userProfile } = useAuth();
   const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [selectedSupplier, setSelectedSupplier] = useState(null);
-  const [showStatusModal, setShowStatusModal] = useState(false);
-  const [selectedStatusSupplier, setSelectedStatusSupplier] = useState(null);
-  const [statusLoading, setStatusLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
@@ -37,54 +28,6 @@ export default function SuppliersPage() {
     s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (s.contactPerson && s.contactPerson.toLowerCase().includes(searchTerm.toLowerCase()))
   );
-
-  function openEditModal(supplier) {
-    setSelectedSupplier(supplier);
-    setShowEditModal(true);
-  }
-
-  function openToggleSupplierStatusModal(supplier) {
-    setSelectedStatusSupplier(supplier);
-    setShowStatusModal(true);
-  }
-
-  async function toggleSupplierStatus(supplier) {
-    setStatusLoading(true);
-    const nextIsActive = supplier.isActive === false;
-
-    try {
-      await updateDoc(doc(db, "suppliers", supplier.id), {
-        isActive: nextIsActive,
-        updatedAt: serverTimestamp(),
-      });
-      await writeAuditLog(db, {
-        action: nextIsActive ? "Supplier reactivated" : "Supplier deactivated",
-        entityType: "supplier",
-        entityId: supplier.id,
-        description: `${nextIsActive ? "Reactivated" : "Deactivated"} supplier ${supplier.name}`,
-        metadata: {
-          name: supplier.name,
-          isActive: nextIsActive,
-        },
-        currentUser,
-        userProfile,
-      });
-      setSuppliers((prev) =>
-        prev.map((entry) =>
-          entry.id === supplier.id
-            ? {
-                ...entry,
-                isActive: nextIsActive,
-              }
-            : entry
-        )
-      );
-    } catch (err) {
-      console.error("Error updating supplier status:", err);
-    } finally {
-      setStatusLoading(false);
-    }
-  }
 
   return (
     <Layout>
@@ -142,12 +85,11 @@ export default function SuppliersPage() {
                   <th className="text-left px-6 py-3.5 font-medium text-gray-500 text-xs uppercase tracking-wider">Phone</th>
                   <th className="text-left px-6 py-3.5 font-medium text-gray-500 text-xs uppercase tracking-wider">Email</th>
                   <th className="text-left px-6 py-3.5 font-medium text-gray-500 text-xs uppercase tracking-wider">Status</th>
-                  <th className="text-right px-6 py-3.5 font-medium text-gray-500 text-xs uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {filtered.map((supplier) => (
-                  <tr key={supplier.id} className={`hover:bg-gray-50/50 transition-colors ${supplier.isActive === false ? "opacity-70" : ""}`}>
+                  <tr key={supplier.id} className="hover:bg-gray-50/50 transition-colors">
                     <td className="px-6 py-4 font-medium text-gray-900">{supplier.name}</td>
                     <td className="px-6 py-4 text-gray-500">{supplier.contactPerson || "—"}</td>
                     <td className="px-6 py-4 text-gray-500">{supplier.phone || "—"}</td>
@@ -159,30 +101,6 @@ export default function SuppliersPage() {
                         {supplier.isActive !== false ? "Active" : "Inactive"}
                       </span>
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          type="button"
-                          onClick={() => openEditModal(supplier)}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 text-xs font-medium transition-colors"
-                        >
-                          <PencilLine size={13} />
-                          Edit
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => openToggleSupplierStatusModal(supplier)}
-                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                            supplier.isActive !== false
-                              ? "border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100"
-                              : "border border-green-200 bg-green-50 text-green-700 hover:bg-green-100"
-                          }`}
-                        >
-                          {supplier.isActive !== false ? <ToggleLeft size={13} /> : <ToggleRight size={13} />}
-                          {supplier.isActive !== false ? "Deactivate" : "Activate"}
-                        </button>
-                      </div>
-                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -192,202 +110,11 @@ export default function SuppliersPage() {
       </div>
 
       {showAddModal && <AddSupplierModal onClose={() => setShowAddModal(false)} />}
-      {showEditModal && selectedSupplier && (
-        <EditSupplierModal
-          supplier={selectedSupplier}
-          onClose={() => {
-            setShowEditModal(false);
-            setSelectedSupplier(null);
-          }}
-          onSaved={(updatedSupplier) => {
-            setSuppliers((prev) => prev.map((entry) => (entry.id === updatedSupplier.id ? updatedSupplier : entry)));
-            setShowEditModal(false);
-            setSelectedSupplier(null);
-          }}
-        />
-      )}
-      {showStatusModal && selectedStatusSupplier && (
-        <ConfirmActionModal
-          open={showStatusModal}
-          title={`${selectedStatusSupplier.isActive === false ? "Activate" : "Deactivate"} supplier`}
-          description={`${selectedStatusSupplier.isActive === false ? "Reactivate" : "Deactivate"} "${selectedStatusSupplier.name}"?`}
-          confirmLabel={selectedStatusSupplier.isActive === false ? "Activate" : "Deactivate"}
-          tone={selectedStatusSupplier.isActive === false ? "success" : "warning"}
-          loading={statusLoading}
-          onCancel={() => {
-            setShowStatusModal(false);
-            setSelectedStatusSupplier(null);
-          }}
-          onConfirm={async () => {
-            if (!selectedStatusSupplier) return;
-            await toggleSupplierStatus(selectedStatusSupplier);
-            setShowStatusModal(false);
-            setSelectedStatusSupplier(null);
-          }}
-        />
-      )}
     </Layout>
   );
 }
 
-function EditSupplierModal({ supplier, onClose, onSaved }) {
-  const { currentUser, userProfile } = useAuth();
-  const [formData, setFormData] = useState({
-    name: supplier.name || "",
-    contactPerson: supplier.contactPerson || "",
-    phone: supplier.phone || "",
-    email: supplier.email || "",
-    address: supplier.address || "",
-    notes: supplier.notes || "",
-    isActive: supplier.isActive !== false,
-  });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-
-  async function handleSubmit(e) {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-
-    try {
-      const updates = {
-        name: formData.name.trim(),
-        contactPerson: formData.contactPerson.trim(),
-        phone: formData.phone.trim(),
-        email: formData.email.trim(),
-        address: formData.address.trim(),
-        notes: formData.notes.trim(),
-        isActive: formData.isActive,
-        updatedAt: serverTimestamp(),
-      };
-
-      await updateDoc(doc(db, "suppliers", supplier.id), updates);
-      await writeAuditLog(db, {
-        action: "Supplier updated",
-        entityType: "supplier",
-        entityId: supplier.id,
-        description: `Updated supplier ${supplier.name}`,
-        metadata: updates,
-        currentUser,
-        userProfile,
-      });
-
-      onSaved({
-        ...supplier,
-        ...updates,
-      });
-    } catch (err) {
-      setError("Failed to update supplier.");
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn">
-        <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl">
-          <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900">Edit Supplier</h2>
-              <p className="text-sm text-gray-500 mt-0.5">Update supplier details</p>
-            </div>
-            <button onClick={onClose} className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
-              <X size={18} />
-            </button>
-          </div>
-          {error && (
-            <div className="mx-6 mt-4 p-3 bg-red-50 border border-red-100 text-red-700 text-sm rounded-lg">
-              {error}
-            </div>
-          )}
-          <form onSubmit={handleSubmit} className="p-6 space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Supplier Name</label>
-              <input
-                type="text"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50"
-                required
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Contact Person</label>
-                <input
-                  type="text"
-                  value={formData.contactPerson}
-                  onChange={(e) => setFormData({ ...formData, contactPerson: e.target.value })}
-                  className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Phone</label>
-                <input
-                  type="text"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50"
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Status</label>
-                <select
-                  value={formData.isActive ? "active" : "inactive"}
-                  onChange={(e) => setFormData({ ...formData, isActive: e.target.value === "active" })}
-                  className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50"
-                >
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                </select>
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Address</label>
-              <textarea
-                value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                rows={2}
-                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50 resize-none"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Notes</label>
-              <textarea
-                value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                rows={3}
-                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50 resize-none"
-              />
-            </div>
-            <div className="flex gap-3 pt-4 border-t border-gray-100">
-              <button type="button" onClick={onClose} className="flex-1 px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
-                Cancel
-              </button>
-              <button type="submit" disabled={loading} className="flex-1 px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-semibold disabled:opacity-50 transition-colors flex items-center justify-center gap-2">
-                {loading ? <><Loader2 size={14} className="animate-spin" />Saving...</> : "Save Changes"}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-  );
-}
-
 function AddSupplierModal({ onClose }) {
-  const { currentUser, userProfile } = useAuth();
   const [formData, setFormData] = useState({
     name: "",
     contactPerson: "",
@@ -408,18 +135,6 @@ function AddSupplierModal({ onClose }) {
         isActive: true,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
-      });
-      await writeAuditLog(db, {
-        action: "Supplier created",
-        entityType: "supplier",
-        description: `Created supplier ${formData.name}`,
-        metadata: {
-          contactPerson: formData.contactPerson,
-          phone: formData.phone,
-          email: formData.email,
-        },
-        currentUser,
-        userProfile,
       });
       onClose();
       window.location.reload();
@@ -514,3 +229,4 @@ function AddSupplierModal({ onClose }) {
     </Layout>
   );
 }
+

@@ -177,7 +177,7 @@ export default function ReportsPage() {
     const ws = XLSX.utils.json_to_sheet(rows);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Report");
-    XLSX.writeFile(wb, `UGMC_${reportType}_${new Date().toISOString().split("T")[0]}.xlsx`);
+    XLSX.writeFile(wb, `Mayrit_${reportType}_${new Date().toISOString().split("T")[0]}.xlsx`);
   }
 
   function exportPDF() {
@@ -185,14 +185,14 @@ export default function ReportsPage() {
     const doc = new jsPDF("landscape");
     const label = REPORT_TYPES.find((r) => r.id === reportType)?.label;
     doc.setFontSize(16);
-    doc.text(`UGMC - ${label}`, 14, 20);
+    doc.text(`Mayrit Cuisines - ${label}`, 14, 20);
     doc.setFontSize(10);
     doc.setTextColor(100);
     doc.text(`Generated: ${new Date().toLocaleDateString()}  |  Records: ${data.length}`, 14, 30);
     if (summary) {
       doc.text(`Summary: ${JSON.stringify(summary).replace(/[{}"]/g, "")}`, 14, 38);
     }
-    doc.save(`UGMC_${reportType}_${new Date().toISOString().split("T")[0]}.pdf`);
+    doc.save(`Mayrit_${reportType}_${new Date().toISOString().split("T")[0]}.pdf`);
   }
 
   function formatDate(val) {
@@ -468,3 +468,4 @@ export default function ReportsPage() {
     </Layout>
   );
 }
+

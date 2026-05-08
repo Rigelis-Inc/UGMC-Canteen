@@ -1,7 +1,9 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { hasPermission } from "../../lib/permissions";
+import { collection, query, where, onSnapshot } from "firebase/firestore";
+import { db } from "../../config/firebase";
 import {
   LayoutDashboard,
   Warehouse,
@@ -9,13 +11,13 @@ import {
   ArrowDownToLine,
   ArrowUpToLine,
   ArrowUpDown,
-  SlidersHorizontal,
   TriangleAlert,
   Truck,
   Users,
   BarChart3,
   ShieldCheck,
   Settings,
+  Globe,
   LogOut,
   Menu,
   X,
@@ -24,7 +26,13 @@ import {
   Activity,
   ChevronDown,
   ChevronRight,
+  UtensilsCrossed,
+  ClipboardList,
+  ShoppingCart,
+  SlidersHorizontal,
 } from "lucide-react";
+
+const DASHBOARD_PATH = "/admin/dashboard";
 
 const navGroups = [
   {
@@ -32,14 +40,14 @@ const navGroups = [
     label: "Inventory",
     icon: Warehouse,
     items: [
-      { label: "Stores", icon: Warehouse, path: "/stores", permission: "viewDashboard" },
-      { label: "Products", icon: Package, path: "/products", permission: "manageProducts" },
-      { label: "Receive Stock", icon: ArrowDownToLine, path: "/receive-stock", permission: "receiveStock" },
-      { label: "Issue Stock", icon: ArrowUpToLine, path: "/issue-stock", permission: "issueStock" },
-      { label: "Transfer Stock", icon: ArrowUpDown, path: "/transfer-stock", permission: "transferStock" },
-      { label: "Adjust Stock", icon: SlidersHorizontal, path: "/adjust-stock", permission: "adjustStock" },
-      { label: "Damage / Expiry", icon: TriangleAlert, path: "/damage-expiry", permission: "adjustStock" },
-      { label: "Movements", icon: Activity, path: "/stock-movements", permission: "viewReports" },
+      { label: "Stores", icon: Warehouse, path: "/admin/stores", permission: "viewDashboard" },
+      { label: "Products", icon: Package, path: "/admin/products", permission: "manageProducts" },
+      { label: "Receive Stock", icon: ArrowDownToLine, path: "/admin/stock/receive", permission: "receiveStock" },
+      { label: "Issue Stock", icon: ArrowUpToLine, path: "/admin/stock/issue", permission: "issueStock" },
+      { label: "Transfer Stock", icon: ArrowUpDown, path: "/admin/stock/transfer", permission: "transferStock" },
+      { label: "Adjust Stock", icon: SlidersHorizontal, path: "/admin/stock/adjust", permission: "adjustStock" },
+      { label: "Damage / Expiry", icon: TriangleAlert, path: "/admin/stock/damage-expiry", permission: "adjustStock" },
+      { label: "Movements", icon: Activity, path: "/admin/stock-movements", permission: "viewReports" },
     ],
   },
   {
@@ -47,8 +55,8 @@ const navGroups = [
     label: "Management",
     icon: Truck,
     items: [
-      { label: "Suppliers", icon: Truck, path: "/suppliers", permission: "manageSuppliers" },
-      { label: "Recipients", icon: Users, path: "/recipients", permission: "manageRecipients" },
+      { label: "Suppliers", icon: Truck, path: "/admin/suppliers", permission: "manageSuppliers" },
+      { label: "Recipients", icon: Users, path: "/admin/recipients", permission: "manageRecipients" },
     ],
   },
   {
@@ -56,19 +64,29 @@ const navGroups = [
     label: "Administration",
     icon: Settings,
     items: [
-      { label: "Reports", icon: BarChart3, path: "/reports", permission: "viewReports" },
-      { label: "Audit Logs", icon: ShieldCheck, path: "/audit-logs", permission: "viewAuditLogs" },
-      { label: "Users", icon: Users, path: "/users", permission: "manageUsers" },
-      { label: "Settings", icon: Settings, path: "/settings", permission: "manageSettings" },
+      { label: "Reports", icon: BarChart3, path: "/admin/reports", permission: "viewReports" },
+      { label: "Audit Logs", icon: ShieldCheck, path: "/admin/audit-logs", permission: "viewAuditLogs" },
+      { label: "Users", icon: Users, path: "/admin/users", permission: "manageUsers" },
+      { label: "Settings", icon: Settings, path: "/admin/settings", permission: "manageSettings" },
+    ],
+  },
+  {
+    id: "food-ordering",
+    label: "Food Ordering",
+    icon: UtensilsCrossed,
+    items: [
+      { label: "Menu Items", icon: ShoppingCart, path: "/admin/menu", permission: "manageMenuItems" },
+      { label: "Orders", icon: ClipboardList, path: "/admin/orders", permission: "manageFoodOrders" },
+      { label: "Order Settings", icon: SlidersHorizontal, path: "/admin/order-settings", permission: "manageOrderSettings" },
     ],
   },
 ];
 
-function NavGroup({ group, collapsed, isOpen, onToggle, location, onNav }) {
+function NavGroup({ group, collapsed, isOpen, onToggle, location, onNav, badge }) {
   const hasActive = group.items.some(
     (item) =>
       location.pathname === item.path ||
-      (item.path !== "/dashboard" && location.pathname.startsWith(item.path + "/"))
+      (item.path !== DASHBOARD_PATH && location.pathname.startsWith(item.path + "/"))
   );
 
   if (collapsed) {
@@ -77,12 +95,12 @@ function NavGroup({ group, collapsed, isOpen, onToggle, location, onNav }) {
         {group.items.map((item) => {
           const isActive =
             location.pathname === item.path ||
-            (item.path !== "/dashboard" && location.pathname.startsWith(item.path + "/"));
+            (item.path !== DASHBOARD_PATH && location.pathname.startsWith(item.path + "/"));
           return (
             <Link
               key={item.path}
               to={item.path}
-              onClick={() => onNav(group.id)}
+              onClick={onNav}
               title={item.label}
               className={`group relative flex items-center justify-center w-full px-2 py-2.5 rounded-lg transition-all duration-200 ${
                 isActive
@@ -94,6 +112,11 @@ function NavGroup({ group, collapsed, isOpen, onToggle, location, onNav }) {
                 <span className="absolute inset-0 bg-gradient-to-r from-primary-600 to-primary-500 rounded-lg shadow-lg shadow-primary-600/20" />
               )}
               <item.icon size={16} className="relative flex-shrink-0" />
+              {badge > 0 && item.path === "/admin/orders" && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] flex items-center justify-center rounded-full text-[9px] font-bold bg-amber-500 text-white px-0.5 border-2 border-slate-900">
+                  {badge > 9 ? "9+" : badge}
+                </span>
+              )}
             </Link>
           );
         })}
@@ -131,7 +154,7 @@ function NavGroup({ group, collapsed, isOpen, onToggle, location, onNav }) {
               <Link
                 key={item.path}
                 to={item.path}
-                onClick={() => onNav(group.id)}
+                onClick={onNav}
                 className={`group relative flex items-center gap-2.5 px-2.5 py-2 rounded-md text-[13px] font-medium transition-all duration-200 ${
                   isActive
                     ? "text-white"
@@ -146,6 +169,11 @@ function NavGroup({ group, collapsed, isOpen, onToggle, location, onNav }) {
                 )}
                 <item.icon size={14} className="relative flex-shrink-0 opacity-70" />
                 <span className="relative truncate">{item.label}</span>
+                {badge > 0 && item.path === "/admin/orders" && (
+                  <span className="relative ml-auto min-w-[18px] h-[18px] flex items-center justify-center rounded-full text-[10px] font-bold bg-amber-500 text-white px-1">
+                    {badge > 9 ? "9+" : badge}
+                  </span>
+                )}
               </Link>
             );
           })}
@@ -158,10 +186,18 @@ function NavGroup({ group, collapsed, isOpen, onToggle, location, onNav }) {
 export default function Sidebar({ collapsed, onToggle }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [openGroup, setOpenGroup] = useState("inventory");
+  const [pendingOrders, setPendingOrders] = useState(0);
   const location = useLocation();
   const navigate = useNavigate();
   const { userProfile, logout } = useAuth();
   const role = userProfile?.role;
+
+  useEffect(() => {
+    const q = query(collection(db, "foodOrders"), where("status", "==", "PENDING"));
+    const unsub = onSnapshot(q, (snap) => setPendingOrders(snap.size));
+    return () => unsub();
+  }, []);
 
   const filteredGroups = navGroups
     .map((group) => ({
@@ -172,48 +208,24 @@ export default function Sidebar({ collapsed, onToggle }) {
 
   const canViewDashboard = hasPermission(role, "viewDashboard");
 
-  const activeGroupId =
-    filteredGroups.find((group) =>
+  useEffect(() => {
+    const activeGroup = filteredGroups.find((group) =>
       group.items.some(
         (item) =>
           location.pathname === item.path ||
           (item.path !== "/dashboard" && location.pathname.startsWith(item.path + "/"))
       )
-    )?.id || null;
-
-  const [openGroup, setOpenGroup] = useState(() => {
-    if (typeof window === "undefined") {
-      return null;
+    );
+    if (activeGroup) {
+      setOpenGroup(activeGroup.id);
     }
-
-    return window.localStorage.getItem("sidebar.openGroup");
-  });
-
-  const validOpenGroupId = filteredGroups.some((group) => group.id === openGroup) ? openGroup : null;
+  }, [location.pathname]);
 
   const handleToggle = useCallback((groupId) => {
-    setOpenGroup((prev) => {
-      const nextGroupId = prev === groupId ? null : groupId;
-
-      if (typeof window !== "undefined") {
-        if (nextGroupId) {
-          window.localStorage.setItem("sidebar.openGroup", nextGroupId);
-        } else {
-          window.localStorage.removeItem("sidebar.openGroup");
-        }
-      }
-
-      return nextGroupId;
-    });
+    setOpenGroup((prev) => (prev === groupId ? null : groupId));
   }, []);
 
-  const handleNav = useCallback((groupId) => {
-    if (groupId) {
-      setOpenGroup(groupId);
-      if (typeof window !== "undefined") {
-        window.localStorage.setItem("sidebar.openGroup", groupId);
-      }
-    }
+  const handleNav = useCallback(() => {
     setMobileOpen(false);
   }, []);
 
@@ -225,13 +237,13 @@ export default function Sidebar({ collapsed, onToggle }) {
     setShowLogoutModal(false);
     try {
       await logout();
-      navigate("/login");
+      navigate("/admin/login");
     } catch {
       console.error("Failed to log out");
     }
   }, [logout, navigate]);
 
-  const isDashboardActive = location.pathname === "/dashboard";
+  const isDashboardActive = location.pathname === DASHBOARD_PATH;
 
   return (
     <>
@@ -257,20 +269,18 @@ export default function Sidebar({ collapsed, onToggle }) {
       >
         <div className="flex flex-col h-full overflow-hidden">
           {/* Header */}
-          <div className={`flex items-center px-4 h-[60px] flex-shrink-0 ${collapsed ? "justify-center" : "justify-between"}`}>
+          <div className={`flex items-center px-4 h-[68px] flex-shrink-0 ${collapsed ? "justify-center" : "justify-between"}`}>
             <div className="flex items-center gap-3 min-w-0 overflow-hidden">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-primary-600/30">
-                <span className="text-white font-bold text-[11px] tracking-wider">UG</span>
-              </div>
+              <img src="/mayrit_logo.png" alt="Mayrit Cuisines" className="w-10 h-10 rounded-xl object-contain flex-shrink-0 shadow-lg shadow-primary-600/20" />
               {!collapsed && (
                 <div className="min-w-0 overflow-hidden">
-                  <p className="text-white font-semibold text-sm leading-tight truncate">UGMC Canteen</p>
+                  <p className="text-white font-semibold text-sm leading-tight truncate">Mayrit Cuisines</p>
                   <p className="text-slate-500 text-[11px] leading-tight">Inventory Management</p>
                 </div>
               )}
             </div>
             {!collapsed && (
-              <button onClick={onToggle} className="hidden lg:flex p-1.5 rounded-md text-slate-600 hover:text-slate-300 hover:bg-slate-800/50 transition-all flex-shrink-0" title="Collapse sidebar">
+              <button onClick={onToggle} className="p-1.5 rounded-md text-slate-400 hover:text-white hover:bg-slate-800/50 transition-all" title="Collapse sidebar">
                 <PanelLeftClose size={15} />
               </button>
             )}
@@ -280,8 +290,8 @@ export default function Sidebar({ collapsed, onToggle }) {
           </div>
 
           {collapsed && (
-            <div className="flex justify-center py-2 flex-shrink-0">
-              <button onClick={onToggle} className="p-2 rounded-lg text-slate-600 hover:text-slate-300 hover:bg-slate-800/50 transition-all" title="Expand sidebar">
+            <div className="flex flex-col items-center gap-1 py-2 flex-shrink-0">
+              <button onClick={onToggle} className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/50 transition-all" title="Expand sidebar">
                 <PanelLeftOpen size={15} />
               </button>
             </div>
@@ -293,7 +303,7 @@ export default function Sidebar({ collapsed, onToggle }) {
             {canViewDashboard && (
               <div className="mb-3">
                 <Link
-                  to="/dashboard"
+                  to={DASHBOARD_PATH}
                   onClick={handleNav}
                   className={`group relative flex items-center gap-2.5 px-2.5 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
                     isDashboardActive
@@ -330,16 +340,38 @@ export default function Sidebar({ collapsed, onToggle }) {
                 key={group.id}
                 group={group}
                 collapsed={collapsed}
-                isOpen={validOpenGroupId === group.id || (!validOpenGroupId && activeGroupId === group.id)}
+                isOpen={openGroup === group.id}
                 onToggle={() => handleToggle(group.id)}
                 location={location}
                 onNav={handleNav}
+                badge={pendingOrders}
               />
             ))}
           </div>
 
           {/* User */}
           <div className="flex-shrink-0 border-t border-slate-800/50 p-3 space-y-2">
+            {/* Visit Website */}
+            {collapsed ? (
+              <div className="flex justify-center mb-1">
+                <Link
+                  to="/"
+                  title="Visit Website"
+                  className="p-2 rounded-lg bg-primary-500/20 text-primary-400 hover:bg-primary-500/30 transition-all"
+                >
+                  <Globe size={16} />
+                </Link>
+              </div>
+            ) : (
+              <Link
+                to="/"
+                className="flex items-center gap-2.5 w-full px-3 py-2.5 rounded-xl text-[13px] font-semibold bg-primary-500/20 text-primary-300 hover:bg-primary-500/30 border border-primary-500/30 transition-all shadow-sm"
+              >
+                <Globe size={15} className="flex-shrink-0" />
+                <span className="flex-1">Visit Website</span>
+                <span className="text-[10px] font-medium bg-primary-500/30 text-primary-300 px-1.5 py-0.5 rounded-md">↗</span>
+              </Link>
+            )}
             {collapsed ? (
               <div className="flex justify-center">
                 <button onClick={requestLogout} className="p-2 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-all" title="Sign out">
@@ -371,15 +403,15 @@ export default function Sidebar({ collapsed, onToggle }) {
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn">
           <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden">
             <div className="px-6 pt-8 pb-4 text-center">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center mx-auto mb-5 shadow-inner">
-                <LogOut size={24} className="text-primary-500" />
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-red-50 to-red-100 flex items-center justify-center mx-auto mb-5 shadow-inner">
+                <LogOut size={24} className="text-red-500" />
               </div>
               <h3 className="text-lg font-semibold text-gray-900">Sign out</h3>
               <p className="text-sm text-gray-500 mt-1.5 leading-relaxed">Are you sure you want to sign out? You will need to log in again to access the system.</p>
             </div>
             <div className="flex gap-3 p-6 pt-2">
               <button onClick={() => setShowLogoutModal(false)} className="flex-1 px-4 py-3 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors">Cancel</button>
-              <button onClick={confirmLogout} className="flex-1 px-4 py-3 text-sm font-semibold text-white bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-700 hover:to-primary-600 rounded-xl transition-all shadow-lg shadow-primary-600/25">Sign out</button>
+              <button onClick={confirmLogout} className="flex-1 px-4 py-3 text-sm font-semibold text-white bg-gradient-to-r from-red-600 to-red-600 hover:from-red-700 hover:to-red-700 rounded-xl transition-all shadow-lg shadow-red-600/25">Sign out</button>
             </div>
           </div>
         </div>
@@ -387,3 +419,4 @@ export default function Sidebar({ collapsed, onToggle }) {
     </>
   );
 }
+

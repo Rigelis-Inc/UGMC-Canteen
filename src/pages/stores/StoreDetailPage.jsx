@@ -168,7 +168,7 @@ export default function StoreDetailPage() {
     <Layout>
     <div className="mb-6 animate-fadeIn">
         <button
-          onClick={() => navigate("/stores")}
+          onClick={() => navigate("/admin/stores")}
           className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 mb-3 transition-colors"
         >
           <ArrowLeft size={14} />
