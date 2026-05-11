@@ -2,8 +2,7 @@ import { useState, useCallback, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { hasPermission } from "../../lib/permissions";
-import { collection, query, where, onSnapshot } from "firebase/firestore";
-import { db } from "../../config/firebase";
+import { useKitchenBadge } from "../../contexts/KitchenBadgeContext";
 import {
   LayoutDashboard,
   Warehouse,
@@ -193,18 +192,11 @@ export default function Sidebar({ collapsed, onToggle }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [openGroup, setOpenGroup] = useState("inventory");
-  const [pendingOrders, setPendingOrders] = useState(0);
+  const pendingOrders = useKitchenBadge();
   const location = useLocation();
   const navigate = useNavigate();
   const { userProfile, logout } = useAuth();
   const role = userProfile?.role;
-
-  useEffect(() => {
-    // Kitchen orders pending badge
-    const q = query(collection(db, "wardMealOrders"), where("status", "==", "REQUESTED"));
-    const unsub = onSnapshot(q, (snap) => setPendingOrders(snap.size));
-    return () => unsub();
-  }, []);
 
   const filteredGroups = navGroups
     .map((group) => ({

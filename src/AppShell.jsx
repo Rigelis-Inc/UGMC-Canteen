@@ -1,6 +1,9 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useState, useEffect } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
+import { collection, query, where, onSnapshot } from "firebase/firestore";
+import { db } from "./config/firebase";
 import ProtectedRoute from "./components/common/ProtectedRoute";
+import { KitchenBadgeContext } from "./contexts/KitchenBadgeContext";
 
 const DashboardPage = lazy(() => import("./pages/dashboard/DashboardPage"));
 const StoresPage = lazy(() => import("./pages/stores/StoresPage"));
@@ -37,7 +40,16 @@ function ShellLoader() {
 }
 
 export default function AppShell() {
+  const [pendingOrders, setPendingOrders] = useState(0);
+
+  useEffect(() => {
+    const q = query(collection(db, "wardMealOrders"), where("status", "==", "REQUESTED"));
+    const unsub = onSnapshot(q, (snap) => setPendingOrders(snap.size), () => setPendingOrders(0));
+    return () => unsub();
+  }, []);
+
   return (
+    <KitchenBadgeContext.Provider value={pendingOrders}>
     <Suspense fallback={<ShellLoader />}>
       <Routes>
         {/* Inventory */}
@@ -232,5 +244,6 @@ export default function AppShell() {
         <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
       </Routes>
     </Suspense>
+    </KitchenBadgeContext.Provider>
   );
 }
