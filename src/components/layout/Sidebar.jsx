@@ -271,7 +271,7 @@ export default function Sidebar({ collapsed, onToggle }) {
           {/* Header */}
           <div className={`flex items-center px-4 h-[68px] flex-shrink-0 ${collapsed ? "justify-center" : "justify-between"}`}>
             <div className="flex items-center gap-3 min-w-0 overflow-hidden">
-              <img src="/mayrit_logo.png" alt="Mayrit Cuisines" className="w-10 h-10 rounded-xl object-contain flex-shrink-0 shadow-lg shadow-primary-600/20" />
+              <img src="/favicon_48.png" alt="Mayrit Cuisines" className="flex-shrink-0 rounded-lg object-cover" style={{width:"36px",height:"36px"}} />
               {!collapsed && (
                 <div className="min-w-0 overflow-hidden">
                   <p className="text-white font-semibold text-sm leading-tight truncate">Mayrit Cuisines</p>
