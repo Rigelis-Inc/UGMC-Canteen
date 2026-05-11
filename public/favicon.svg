@@ -1,18 +1,31 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+<!-- updated --><svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
   <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#f97316"/>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fb923c"/>
       <stop offset="100%" stop-color="#ea580c"/>
     </linearGradient>
   </defs>
-  <rect width="32" height="32" rx="7" fill="url(#g)"/>
-  <g fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-    <!-- Plate -->
-    <ellipse cx="16" cy="20" rx="9" ry="3"/>
-    <ellipse cx="16" cy="19" rx="7" ry="2.5"/>
-    <!-- Steam -->
-    <path d="M12,16 C12,13 14,12 14,9"/>
-    <path d="M16,15 C16,12 18,11 18,8"/>
-    <path d="M20,16 C20,13 22,12 22,9"/>
-  </g>
+
+  <!-- Orange rounded square background -->
+  <rect width="64" height="64" rx="14" ry="14" fill="url(#bg)"/>
+
+  <!-- White oval shape (like the brand oval) -->
+  <ellipse cx="32" cy="32" rx="26" ry="21" fill="white" opacity="0.15"/>
+
+  <!-- Leaf ornament (top centre) — matches Mayrit brand leaf -->
+  <!-- Main stem -->
+  <line x1="32" y1="42" x2="32" y2="16" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+  <!-- Left leaf 1 -->
+  <ellipse cx="26.5" cy="32" rx="6" ry="3" transform="rotate(-45 26.5 32)" fill="white"/>
+  <!-- Left leaf 2 -->
+  <ellipse cx="24.5" cy="25" rx="5" ry="2.6" transform="rotate(-55 24.5 25)" fill="white" opacity="0.85"/>
+  <!-- Right leaf 1 -->
+  <ellipse cx="37.5" cy="30" rx="6" ry="3" transform="rotate(45 37.5 30)" fill="white"/>
+  <!-- Right leaf 2 -->
+  <ellipse cx="39.5" cy="23" rx="5" ry="2.6" transform="rotate(55 39.5 23)" fill="white" opacity="0.85"/>
+  <!-- Tip berry -->
+  <circle cx="32" cy="15.5" r="2" fill="white"/>
+
+  <!-- "M" wordmark -->
+  <text x="32" y="57" font-family="Georgia, 'Times New Roman', serif" font-size="16" font-weight="700" fill="white" text-anchor="middle">M</text>
 </svg>

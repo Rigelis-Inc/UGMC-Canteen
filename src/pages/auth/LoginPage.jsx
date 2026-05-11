@@ -68,40 +68,62 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex bg-slate-950">
       {/* Left Panel - Branding */}
-      <div className="hidden lg:flex lg:w-5/12 relative overflow-hidden bg-gradient-to-br from-primary-600 to-primary-800">
-        {/* Abstract shapes */}
-        <div className="absolute top-0 right-0 w-80 h-80 rounded-full bg-white/5 -translate-y-1/2 translate-x-1/3" />
-        <div className="absolute bottom-0 left-0 w-64 h-64 rounded-full bg-white/5 translate-y-1/3 -translate-x-1/4" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 rounded-2xl bg-white/5 rotate-12" />
-        <div className="absolute top-20 left-20 w-3 h-3 rounded-full bg-white/20" />
-        <div className="absolute bottom-32 right-24 w-2 h-2 rounded-full bg-white/15" />
-        <div className="absolute top-1/3 right-16 w-2 h-2 rounded-full bg-white/10" />
+      <div className="hidden lg:flex lg:w-5/12 relative overflow-hidden" style={{background: "linear-gradient(160deg, #ea6a10 0%, #c94f00 100%)"}}>
+        {/* Subtle radial glow behind logo */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="w-[420px] h-[420px] rounded-full bg-white/10 blur-3xl" />
+        </div>
+        {/* Large faint circle top-right */}
+        <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full border border-white/10" />
+        {/* Large faint circle bottom-left */}
+        <div className="absolute -bottom-20 -left-20 w-80 h-80 rounded-full border border-white/10" />
 
-        <div className="relative z-10 flex flex-col justify-between p-12 w-full">
-          {/* Top spacer */}
-          <div />
-
-          {/* Center */}
-          <div className="flex flex-col items-center text-center">
-            <img src="/mayrit_logo.png" alt="Mayrit Cuisines" className="w-48 h-48 object-contain mb-6 drop-shadow-2xl" />
-            <h1 className="text-5xl font-bold text-white tracking-tight mb-2">Mayrit</h1>
-            <p className="text-2xl font-medium text-primary-200/80 tracking-wide">Cuisines</p>
-            <div className="w-20 h-px bg-white/20 mt-10 mb-8" />
-            <p className="text-primary-100/50 text-lg tracking-wide">Inventory Management System</p>
+        {/* Content */}
+        <div className="relative z-10 flex flex-col items-center justify-center w-full h-full px-10 py-16">
+          {/* Logo */}
+          <div className="flex items-center justify-center mb-8">
+            <div
+              className="flex items-center justify-center"
+              style={{
+                background: "white",
+                borderRadius: "50% / 45%",
+                padding: "18px 26px",
+                boxShadow: "0 12px 48px rgba(0,0,0,0.28), 0 2px 8px rgba(0,0,0,0.15)",
+              }}
+            >
+              <img
+                src="/mayrit_logo.png"
+                alt="Mayrit Cuisines Limited"
+                className="w-[240px] h-auto object-contain"
+              />
+            </div>
           </div>
 
-          {/* Bottom */}
-          <p className="text-primary-200/40 text-xs">&copy; {new Date().getFullYear()} Mayrit Cuisines</p>
+          {/* Divider */}
+          <div className="flex items-center gap-3 w-48 mb-6">
+            <div className="flex-1 h-px bg-white/20" />
+            <div className="w-1.5 h-1.5 rounded-full bg-white/30" />
+            <div className="flex-1 h-px bg-white/20" />
+          </div>
+
+          {/* Tagline */}
+          <p className="text-white/50 text-xs tracking-[0.25em] uppercase font-semibold text-center">
+            Inventory Management System
+          </p>
         </div>
+
+        {/* Copyright bottom */}
+        <p className="absolute bottom-5 left-0 right-0 text-center text-white/25 text-xs">
+          &copy; {new Date().getFullYear()} Mayrit Cuisines Limited
+        </p>
       </div>
 
       {/* Right Panel - Form */}
       <div className="flex-1 flex items-center justify-center px-6 py-12 sm:px-12 lg:px-16 relative">
         {/* Mobile top branding */}
-          <div className="lg:hidden absolute top-6 left-6 flex items-center gap-2.5">
-            <img src="/mayrit_logo.png" alt="Mayrit Cuisines" className="w-12 h-12 rounded-lg object-contain shadow-lg shadow-primary-600/30" />
-            <p className="text-white font-semibold text-sm">Mayrit Cuisines</p>
-          </div>
+        <div className="lg:hidden absolute top-5 left-1/2 -translate-x-1/2">
+          <img src="/mayrit_logo.png" alt="Mayrit Cuisines" className="h-20 w-auto object-contain" style={{filter:"drop-shadow(0 4px 12px rgba(0,0,0,0.20))"}} />
+        </div>
 
         <div className="w-full max-w-sm">
           {showReset ? (
@@ -174,8 +196,8 @@ export default function LoginPage() {
           ) : (
             <div className="animate-fadeIn">
               {/* Mobile logo */}
-              <div className="lg:hidden flex flex-col items-center mb-8">
-                <img src="/mayrit_logo.png" alt="Mayrit Cuisines" className="w-20 h-20 rounded-xl object-contain shadow-xl shadow-primary-600/30 mb-3" />
+              <div className="lg:hidden flex flex-col items-center mb-8 pt-14">
+                <img src="/mayrit_logo.png" alt="Mayrit Cuisines" className="h-28 w-auto object-contain mb-3" style={{filter:"drop-shadow(0 4px 16px rgba(0,0,0,0.18))"}} />
               </div>
 
               {/* Desktop heading */}
