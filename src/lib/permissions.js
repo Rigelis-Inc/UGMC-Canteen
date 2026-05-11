@@ -5,7 +5,25 @@ export const ROLES = {
   STORE_OFFICER: "STORE_OFFICER",
   SUPERVISOR: "SUPERVISOR",
   AUDITOR: "AUDITOR",
+  NURSE: "NURSE",
+  KITCHEN_STAFF: "KITCHEN_STAFF",
 };
+
+export const ROLE_LABELS = {
+  SUPER_ADMIN: "Super Admin",
+  ADMIN: "Admin",
+  STORE_MANAGER: "Store Manager",
+  STORE_OFFICER: "Store Officer",
+  SUPERVISOR: "Supervisor",
+  AUDITOR: "Auditor",
+  NURSE: "Nurse",
+  KITCHEN_STAFF: "Kitchen Staff",
+};
+
+// Which roles belong to the inventory/admin side (see the admin shell)
+export const INVENTORY_ROLES = ["SUPER_ADMIN", "ADMIN", "STORE_MANAGER", "STORE_OFFICER", "SUPERVISOR", "AUDITOR"];
+// Which roles belong to the ward/meal ordering side
+export const MEAL_ROLES = ["NURSE", "KITCHEN_STAFF"];
 
 export const ROLE_PERMISSIONS = {
   [ROLES.SUPER_ADMIN]: {
@@ -121,7 +139,126 @@ export const ROLE_PERMISSIONS = {
     manageMenuItems: false,
     manageFoodOrders: "view",
     manageOrderSettings: false,
+    // Meal ordering
+    manageWards: false,
+    managePatients: false,
+    createMealOrders: false,
+    viewWardMealOrders: false,
+    manageMealMenus: false,
+    manageMealOrders: false,
+    processKitchenOrders: false,
+    viewKitchenDashboard: false,
+    viewMealReports: false,
+    manageMealSettings: false,
   },
+};
+
+// ── Meal ordering permissions for new roles ─────────────────────────────────
+// Merged into ROLE_PERMISSIONS after initial definition
+const MEAL_PERMISSIONS = {
+  [ROLES.SUPER_ADMIN]: {
+    manageWards: true,
+    managePatients: true,
+    createMealOrders: true,
+    viewWardMealOrders: true,
+    manageMealMenus: true,
+    manageMealOrders: true,
+    processKitchenOrders: true,
+    viewKitchenDashboard: true,
+    viewMealReports: true,
+    manageMealSettings: true,
+  },
+  [ROLES.ADMIN]: {
+    manageWards: true,
+    managePatients: true,
+    createMealOrders: true,
+    viewWardMealOrders: true,
+    manageMealMenus: true,
+    manageMealOrders: true,
+    processKitchenOrders: true,
+    viewKitchenDashboard: true,
+    viewMealReports: true,
+    manageMealSettings: true,
+  },
+  [ROLES.AUDITOR]: {
+    manageWards: false,
+    managePatients: "view",
+    createMealOrders: false,
+    viewWardMealOrders: true,
+    manageMealMenus: "view",
+    manageMealOrders: "view",
+    processKitchenOrders: false,
+    viewKitchenDashboard: true,
+    viewMealReports: true,
+    manageMealSettings: false,
+  },
+};
+
+Object.keys(MEAL_PERMISSIONS).forEach((role) => {
+  Object.assign(ROLE_PERMISSIONS[role], MEAL_PERMISSIONS[role]);
+});
+
+// ── New roles: NURSE and KITCHEN_STAFF ──────────────────────────────────────
+ROLE_PERMISSIONS[ROLES.NURSE] = {
+  viewDashboard: false,
+  manageUsers: false,
+  manageStores: false,
+  manageProducts: false,
+  receiveStock: false,
+  issueStock: false,
+  adjustStock: false,
+  transferStock: false,
+  manageSuppliers: false,
+  manageRecipients: false,
+  viewReports: false,
+  exportReports: false,
+  viewAuditLogs: false,
+  manageSettings: false,
+  manageMenuItems: false,
+  manageFoodOrders: false,
+  manageOrderSettings: false,
+  // Meal ordering
+  manageWards: false,
+  managePatients: "assigned",  // only their ward
+  createMealOrders: "assigned",
+  viewWardMealOrders: "assigned",
+  manageMealMenus: "view",
+  manageMealOrders: false,
+  processKitchenOrders: false,
+  viewKitchenDashboard: false,
+  viewMealReports: "assigned",
+  manageMealSettings: false,
+};
+
+ROLE_PERMISSIONS[ROLES.KITCHEN_STAFF] = {
+  viewDashboard: false,
+  manageUsers: false,
+  manageStores: false,
+  manageProducts: false,
+  receiveStock: false,
+  issueStock: false,
+  adjustStock: false,
+  transferStock: false,
+  manageSuppliers: false,
+  manageRecipients: false,
+  viewReports: false,
+  exportReports: false,
+  viewAuditLogs: false,
+  manageSettings: false,
+  manageMenuItems: false,
+  manageFoodOrders: false,
+  manageOrderSettings: false,
+  // Meal ordering
+  manageWards: false,
+  managePatients: false,
+  createMealOrders: false,
+  viewWardMealOrders: true,
+  manageMealMenus: "view",
+  manageMealOrders: true,
+  processKitchenOrders: true,
+  viewKitchenDashboard: true,
+  viewMealReports: "limited",
+  manageMealSettings: false,
 };
 
 export function hasPermission(userRole, permission) {

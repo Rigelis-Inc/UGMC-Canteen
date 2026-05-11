@@ -5,23 +5,28 @@ import { auth, db } from "../../config/firebase";
 import { Plus, X, Users, Loader2, Search } from "lucide-react";
 import Layout from "../../components/layout/Layout";
 
-const ROLES = ["SUPER_ADMIN", "ADMIN", "STORE_MANAGER", "STORE_OFFICER", "SUPERVISOR", "AUDITOR"];
+const ROLES = ["SUPER_ADMIN", "ADMIN", "STORE_MANAGER", "STORE_OFFICER", "SUPERVISOR", "AUDITOR", "NURSE", "KITCHEN_STAFF"];
+
+const MEAL_ROLES = new Set(["NURSE", "KITCHEN_STAFF"]);
 
 export default function UsersPage() {
   const [users, setUsers] = useState([]);
   const [stores, setStores] = useState([]);
+  const [wards, setWards] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     async function fetchData() {
-      const [usersSnap, storesSnap] = await Promise.all([
+      const [usersSnap, storesSnap, wardsSnap] = await Promise.all([
         getDocs(collection(db, "users")),
         getDocs(collection(db, "stores")),
+        getDocs(collection(db, "wards")),
       ]);
       setUsers(usersSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
       setStores(storesSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
+      setWards(wardsSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
       setLoading(false);
     }
     fetchData();
@@ -39,6 +44,8 @@ export default function UsersPage() {
     STORE_OFFICER: "bg-green-100 text-green-700",
     SUPERVISOR: "bg-violet-100 text-violet-700",
     AUDITOR: "bg-gray-100 text-gray-700",
+    NURSE: "bg-blue-100 text-blue-700",
+    KITCHEN_STAFF: "bg-amber-100 text-amber-700",
   };
 
   return (
@@ -138,12 +145,12 @@ export default function UsersPage() {
         )}
       </div>
 
-      {showAddModal && <AddUserModal stores={stores} onClose={() => setShowAddModal(false)} />}
+      {showAddModal && <AddUserModal stores={stores} wards={wards} onClose={() => setShowAddModal(false)} />}
     </Layout>
   );
 }
 
-function AddUserModal({ stores, onClose }) {
+function AddUserModal({ stores, wards, onClose }) {
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -151,6 +158,7 @@ function AddUserModal({ stores, onClose }) {
     phone: "",
     role: "STORE_OFFICER",
     assignedStores: [],
+    assignedWards: [],
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -166,7 +174,8 @@ function AddUserModal({ stores, onClose }) {
         email: formData.email,
         phone: formData.phone,
         role: formData.role,
-        assignedStores: formData.assignedStores,
+        assignedStores: MEAL_ROLES.has(formData.role) ? [] : formData.assignedStores,
+        assignedWards: formData.role === "NURSE" ? formData.assignedWards : [],
         isActive: true,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
@@ -268,20 +277,43 @@ function AddUserModal({ stores, onClose }) {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Assigned Stores</label>
-            <div className="space-y-2">
-              {stores.map((store) => (
-                <label key={store.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.assignedStores.includes(store.id)}
-                    onChange={() => toggleStore(store.id)}
-                    className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                  />
-                  <span className="text-sm text-gray-700">{store.name}</span>
-                </label>
-              ))}
-            </div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              {formData.role === "NURSE" ? "Assigned Wards" : "Assigned Stores"}
+            </label>
+            {formData.role === "NURSE" ? (
+              <div className="space-y-2 max-h-40 overflow-y-auto">
+                {wards.filter(w => w.isActive !== false).map((ward) => (
+                  <label key={ward.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.assignedWards.includes(ward.id)}
+                      onChange={() => toggleWard(ward.id)}
+                      className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                    />
+                    <span className="text-sm text-gray-700">{ward.name}</span>
+                  </label>
+                ))}
+                {wards.filter(w => w.isActive !== false).length === 0 && (
+                  <p className="text-xs text-gray-400 px-2">No wards configured yet.</p>
+                )}
+              </div>
+            ) : MEAL_ROLES.has(formData.role) ? (
+              <p className="text-xs text-gray-400">Kitchen staff have access to all wards.</p>
+            ) : (
+              <div className="space-y-2">
+                {stores.map((store) => (
+                  <label key={store.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.assignedStores.includes(store.id)}
+                      onChange={() => toggleStore(store.id)}
+                      className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                    />
+                    <span className="text-sm text-gray-700">{store.name}</span>
+                  </label>
+                ))}
+              </div>
+            )}
           </div>
           <div className="flex gap-3 pt-4 border-t border-gray-100">
             <button

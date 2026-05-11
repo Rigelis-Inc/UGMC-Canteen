@@ -52,7 +52,11 @@ export function AuthProvider({ children }) {
     logout,
     isAdmin: userProfile?.role === "SUPER_ADMIN" || userProfile?.role === "ADMIN",
     isStoreLevel: ["STORE_MANAGER", "STORE_OFFICER"].includes(userProfile?.role),
+    isNurse: userProfile?.role === "NURSE",
+    isKitchenStaff: userProfile?.role === "KITCHEN_STAFF",
+    isMealRole: ["NURSE", "KITCHEN_STAFF"].includes(userProfile?.role),
     assignedStores: userProfile?.assignedStores || [],
+    assignedWards: userProfile?.assignedWards || [],
   };
 
   return (

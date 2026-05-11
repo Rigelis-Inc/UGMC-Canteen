@@ -103,16 +103,79 @@ service cloud.firestore {
         && request.resource.data.createdAt == request.time;
     }
 
+    function isMealRole() {
+      return userRole() in ["NURSE", "KITCHEN_STAFF", "SUPER_ADMIN", "ADMIN"];
+    }
+
+    function isKitchenOrAdmin() {
+      return userRole() in ["KITCHEN_STAFF", "SUPER_ADMIN", "ADMIN"];
+    }
+
+    function isNurse() {
+      return userRole() == "NURSE";
+    }
+
+    function assignedWards() {
+      return userExists()
+        ? (userData().assignedWards is list ? userData().assignedWards : [])
+        : [];
+    }
+
     function canManageMenu() {
-      return userRole() in ["SUPER_ADMIN", "ADMIN", "STORE_MANAGER"];
+      return userRole() in ["SUPER_ADMIN", "ADMIN"];
     }
 
-    function canManageOrders() {
-      return userRole() in ["SUPER_ADMIN", "ADMIN", "STORE_MANAGER", "STORE_OFFICER", "SUPERVISOR"];
+    match /settings/{settingId} {
+      allow read: if settingId == "orderSettings" || (signedIn() && isAdmin())
+        || (signedIn() && settingId == "mealOrdering" && isMealRole());
+      allow create: if signedIn() && isAdmin() && hasCreateTimestamps();
+      allow update: if signedIn() && isAdmin() && hasUpdateTimestamp();
+      allow delete: if signedIn() && isAdmin();
     }
 
-    function canViewOrders() {
-      return canManageOrders() || userRole() == "AUDITOR";
+    // ── Meal Ordering ─────────────────────────────────────────────────────────
+
+    match /wards/{wardId} {
+      allow read: if signedIn() && isMealRole();
+      allow create: if signedIn() && isAdmin();
+      allow update: if signedIn() && isAdmin();
+      allow delete: if signedIn() && isAdmin();
+    }
+
+    match /patients/{patientId} {
+      allow read: if signedIn() && isMealRole();
+      allow create: if signedIn() && isMealRole()
+        && request.resource.data.name is string
+        && request.resource.data.wardId is string;
+      allow update: if signedIn() && isMealRole()
+        && request.resource.data.wardId is string;
+      allow delete: if signedIn() && isAdmin();
+    }
+
+    match /mealMenus/{menuId} {
+      allow read: if signedIn() && isMealRole();
+      allow create: if signedIn() && canManageMenu();
+      allow update: if signedIn() && canManageMenu();
+      allow delete: if signedIn() && isAdmin();
+    }
+
+    match /wardMealOrders/{orderId} {
+      allow read: if signedIn() && isMealRole();
+      allow create: if signedIn() && isMealRole()
+        && request.resource.data.patientId is string
+        && request.resource.data.wardId is string
+        && request.resource.data.mealPeriod in ["BREAKFAST","LUNCH","SUPPER"]
+        && request.resource.data.status == "REQUESTED";
+      allow update: if signedIn() && isMealRole();
+      allow delete: if signedIn() && isAdmin();
+    }
+
+    match /mealOrderStatusLogs/{logId} {
+      allow read: if signedIn() && isMealRole();
+      allow create: if signedIn() && isMealRole()
+        && request.resource.data.orderId is string
+        && request.resource.data.newStatus is string;
+      allow update, delete: if false;
     }
 
     match /users/{userId} {
@@ -211,60 +274,6 @@ service cloud.firestore {
       );
       allow create: if signedIn() && validAuditLogData();
       allow update, delete: if false;
-    }
-
-    match /settings/{settingId} {
-      // orderSettings is readable publicly (for ordering hours/status banner)
-      allow read: if settingId == "orderSettings" || (signedIn() && isAdmin());
-      allow create: if signedIn() && isAdmin() && hasCreateTimestamps();
-      allow update: if signedIn() && isAdmin() && hasUpdateTimestamp();
-      allow delete: if signedIn() && isAdmin();
-    }
-
-    // ── Food ordering ────────────────────────────────────────────────────────
-
-    match /menuItems/{itemId} {
-      // Public can read active items; admins can read all
-      allow read: if (resource == null || resource.data.isActive == true)
-        || (signedIn() && canManageMenu());
-      allow create: if signedIn() && canManageMenu()
-        && request.resource.data.name is string
-        && request.resource.data.isActive is bool;
-      allow update: if signedIn() && canManageMenu()
-        && request.resource.data.name is string;
-      allow delete: if signedIn() && isAdmin();
-    }
-
-    match /foodOrders/{orderId} {
-      // Public can create an order; cannot read others' orders
-      allow create: if request.resource.data.customerName is string
-        && request.resource.data.phone is string
-        && request.resource.data.status == "PENDING"
-        && request.resource.data.paymentStatus == "PENDING"
-        && request.resource.data.items is list
-        && request.resource.data.items.size() > 0;
-      // Signed-in staff can read and update orders
-      allow read: if signedIn() && canViewOrders();
-      allow update: if signedIn() && canManageOrders();
-      allow delete: if signedIn() && isAdmin();
-    }
-
-    match /orderStatusLogs/{logId} {
-      allow read: if signedIn() && canViewOrders();
-      allow create: if signedIn() && canManageOrders()
-        && request.resource.data.orderId is string
-        && request.resource.data.newStatus is string;
-      allow update, delete: if false;
-    }
-
-    match /publicOrderTracking/{trackingId} {
-      allow read: if true;
-      allow create: if request.resource.data.orderId is string
-        && request.resource.data.orderNumber is string
-        && request.resource.data.status is string
-        && request.resource.data.items is list;
-      allow update: if signedIn() && canManageOrders();
-      allow delete: if signedIn() && isAdmin();
     }
 
     match /{document=**} {

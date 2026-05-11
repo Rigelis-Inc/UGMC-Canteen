@@ -18,10 +18,12 @@ const ReportsPage = lazy(() => import("./pages/reports/ReportsPage"));
 const AuditLogsPage = lazy(() => import("./pages/audit-logs/AuditLogsPage"));
 const UsersPage = lazy(() => import("./pages/users/UsersPage"));
 const SettingsPage = lazy(() => import("./pages/settings/SettingsPage"));
-const MenuManagementPage = lazy(() => import("./pages/admin-menu/MenuManagementPage"));
-const OrdersPage = lazy(() => import("./pages/admin-orders/OrdersPage"));
-const OrderDetailPage = lazy(() => import("./pages/admin-orders/OrderDetailPage"));
-const OrderSettingsPage = lazy(() => import("./pages/admin-orders/OrderSettingsPage"));
+const WardsPage = lazy(() => import("./pages/admin-meal/WardsPage"));
+const MealMenusPage = lazy(() => import("./pages/admin-meal/MealMenusPage"));
+const KitchenDashboardPage = lazy(() => import("./pages/admin-meal/KitchenDashboardPage"));
+const MealOrdersPage = lazy(() => import("./pages/admin-meal/MealOrdersPage"));
+const MealReportsPage = lazy(() => import("./pages/admin-meal/MealReportsPage"));
+const MealSettingsPage = lazy(() => import("./pages/admin-meal/MealSettingsPage"));
 
 function ShellLoader() {
   return (
@@ -169,36 +171,52 @@ export default function AppShell() {
             </ProtectedRoute>
           }
         />
-        {/* Food Ordering (resolved under /admin/*, no conflict with public /menu) */}
+        {/* Meal Ordering */}
         <Route
-          path="menu"
+          path="wards"
           element={
-            <ProtectedRoute requiredPermission="manageMenuItems">
-              <MenuManagementPage />
+            <ProtectedRoute requiredPermission="manageWards">
+              <WardsPage />
             </ProtectedRoute>
           }
         />
         <Route
-          path="orders"
+          path="meal-menus"
           element={
-            <ProtectedRoute requiredPermission="manageFoodOrders">
-              <OrdersPage />
+            <ProtectedRoute requiredPermission="manageMealMenus">
+              <MealMenusPage />
             </ProtectedRoute>
           }
         />
         <Route
-          path="orders/:orderId"
+          path="kitchen"
           element={
-            <ProtectedRoute requiredPermission="manageFoodOrders">
-              <OrderDetailPage />
+            <ProtectedRoute requiredPermission="viewKitchenDashboard">
+              <KitchenDashboardPage />
             </ProtectedRoute>
           }
         />
         <Route
-          path="order-settings"
+          path="meal-orders"
           element={
-            <ProtectedRoute requiredPermission="manageOrderSettings">
-              <OrderSettingsPage />
+            <ProtectedRoute requiredPermission="manageMealOrders">
+              <MealOrdersPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="meal-reports"
+          element={
+            <ProtectedRoute requiredPermission="viewMealReports">
+              <MealReportsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="meal-settings"
+          element={
+            <ProtectedRoute requiredPermission="manageMealSettings">
+              <MealSettingsPage />
             </ProtectedRoute>
           }
         />

@@ -28,8 +28,11 @@ import {
   ChevronRight,
   UtensilsCrossed,
   ClipboardList,
-  ShoppingCart,
+  ChefHat,
+  FileBarChart,
   SlidersHorizontal,
+  Building2,
+  BookOpen,
 } from "lucide-react";
 
 const DASHBOARD_PATH = "/admin/dashboard";
@@ -71,13 +74,16 @@ const navGroups = [
     ],
   },
   {
-    id: "food-ordering",
-    label: "Food Ordering",
+    id: "meal-ordering",
+    label: "Meal Ordering",
     icon: UtensilsCrossed,
     items: [
-      { label: "Menu Items", icon: ShoppingCart, path: "/admin/menu", permission: "manageMenuItems" },
-      { label: "Orders", icon: ClipboardList, path: "/admin/orders", permission: "manageFoodOrders" },
-      { label: "Order Settings", icon: SlidersHorizontal, path: "/admin/order-settings", permission: "manageOrderSettings" },
+      { label: "Wards", icon: Building2, path: "/admin/wards", permission: "manageWards" },
+      { label: "Meal Menus", icon: BookOpen, path: "/admin/meal-menus", permission: "manageMealMenus" },
+      { label: "Kitchen", icon: ChefHat, path: "/admin/kitchen", permission: "viewKitchenDashboard" },
+      { label: "Meal Orders", icon: ClipboardList, path: "/admin/meal-orders", permission: "manageMealOrders" },
+      { label: "Meal Reports", icon: FileBarChart, path: "/admin/meal-reports", permission: "viewMealReports" },
+      { label: "Meal Settings", icon: SlidersHorizontal, path: "/admin/meal-settings", permission: "manageMealSettings" },
     ],
   },
 ];
@@ -112,7 +118,7 @@ function NavGroup({ group, collapsed, isOpen, onToggle, location, onNav, badge }
                 <span className="absolute inset-0 bg-gradient-to-r from-primary-600 to-primary-500 rounded-lg shadow-lg shadow-primary-600/20" />
               )}
               <item.icon size={16} className="relative flex-shrink-0" />
-              {badge > 0 && item.path === "/admin/orders" && (
+              {badge > 0 && item.path === "/admin/kitchen" && (
                 <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] flex items-center justify-center rounded-full text-[9px] font-bold bg-amber-500 text-white px-0.5 border-2 border-slate-900">
                   {badge > 9 ? "9+" : badge}
                 </span>
@@ -169,7 +175,7 @@ function NavGroup({ group, collapsed, isOpen, onToggle, location, onNav, badge }
                 )}
                 <item.icon size={14} className="relative flex-shrink-0 opacity-70" />
                 <span className="relative truncate">{item.label}</span>
-                {badge > 0 && item.path === "/admin/orders" && (
+                {badge > 0 && item.path === "/admin/kitchen" && (
                   <span className="relative ml-auto min-w-[18px] h-[18px] flex items-center justify-center rounded-full text-[10px] font-bold bg-amber-500 text-white px-1">
                     {badge > 9 ? "9+" : badge}
                   </span>
@@ -194,7 +200,8 @@ export default function Sidebar({ collapsed, onToggle }) {
   const role = userProfile?.role;
 
   useEffect(() => {
-    const q = query(collection(db, "foodOrders"), where("status", "==", "PENDING"));
+    // Kitchen orders pending badge
+    const q = query(collection(db, "wardMealOrders"), where("status", "==", "REQUESTED"));
     const unsub = onSnapshot(q, (snap) => setPendingOrders(snap.size));
     return () => unsub();
   }, []);
