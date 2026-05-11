@@ -10,7 +10,9 @@ export default function PublicFooter() {
           {/* Brand */}
           <div className="lg:col-span-2">
             <div className="flex items-center gap-3 mb-4">
-              <img src="/mayrit_logo.png" alt="Mayrit Cuisines" className="w-11 h-11 rounded-xl object-contain flex-shrink-0 shadow-md shadow-orange-500/10" />
+              <div className="flex-shrink-0 flex items-center justify-center bg-white shadow-md" style={{borderRadius:"50% / 45%", padding:"5px 8px"}}>
+                <img src="/mayrit_logo.png" alt="Mayrit Cuisines" className="h-9 w-auto object-contain" style={{maxWidth:"62px"}} />
+              </div>
               <div>
                 <p className="font-bold text-white text-sm tracking-tight">
                   Mayrit<span className="text-orange-400"> Cuisines</span>
