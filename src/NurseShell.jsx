@@ -22,7 +22,7 @@ function ShellLoader() {
 function NurseGuard({ children }) {
   const { currentUser, userProfile, loading } = useAuth();
   if (loading) return <ShellLoader />;
-  if (!currentUser || !userProfile) return <Navigate to="/admin/login" replace />;
+  if (!currentUser || !userProfile) return <Navigate to="/login" replace />;
   const role = userProfile.role;
   // Nurses and kitchen staff use this shell; admins can also access for supervision
   const allowed = ["NURSE", "KITCHEN_STAFF", "SUPER_ADMIN", "ADMIN"].includes(role);

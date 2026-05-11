@@ -2,7 +2,8 @@ import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 
-const LoginPage = lazy(() => import("./pages/auth/LoginPage"));
+const NurseLoginPage = lazy(() => import("./pages/auth/NurseLoginPage"));
+const AdminLoginPage = lazy(() => import("./pages/auth/LoginPage"));
 const AppShell = lazy(() => import("./AppShell"));
 const NurseShell = lazy(() => import("./NurseShell"));
 
@@ -23,18 +24,20 @@ export default function App() {
       <BrowserRouter>
         <Suspense fallback={<AppLoader />}>
           <Routes>
-            {/* Admin / Inventory / Kitchen routes */}
-            <Route path="/admin/login" element={<LoginPage />} />
+            {/* Main entry — nurse / ward meal ordering */}
+            <Route path="/" element={<NurseLoginPage />} />
+            <Route path="/login" element={<NurseLoginPage />} />
+
+            {/* Admin / Inventory portal */}
+            <Route path="/admin/login" element={<AdminLoginPage />} />
             <Route path="/admin/*" element={<AppShell />} />
 
             {/* Nurse ward-ordering routes */}
             <Route path="/nurse/*" element={<NurseShell />} />
 
-            {/* Redirects */}
-            <Route path="/login" element={<Navigate to="/admin/login" replace />} />
-            <Route path="/dashboard" element={<Navigate to="/admin/dashboard" replace />} />
-            <Route path="/" element={<Navigate to="/admin/login" replace />} />
-            <Route path="*" element={<Navigate to="/admin/login" replace />} />
+            {/* Legacy redirects */}
+            <Route path="/dashboard" element={<Navigate to="/nurse/dashboard" replace />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>
       </BrowserRouter>
