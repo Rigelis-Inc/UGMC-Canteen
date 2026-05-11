@@ -1,0 +1,13 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "mealMenus",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "dayOfWeek", "order": "ASCENDING" },
+        { "fieldPath": "mealPeriod", "order": "ASCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}
