@@ -72,7 +72,9 @@ export default function PublicNavbar() {
           <div className="flex items-center justify-between h-[68px]">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2.5">
-              <img src="/mayrit_logo.png" alt="Mayrit Cuisines" className="w-11 h-11 rounded-xl object-contain flex-shrink-0 shadow-md shadow-orange-500/10" />
+              <div className="flex-shrink-0 flex items-center justify-center bg-white shadow-md shadow-orange-500/20" style={{borderRadius:"50% / 45%", padding:"4px 7px"}}>
+                <img src="/mayrit_logo.png" alt="Mayrit Cuisines" className="h-8 w-auto object-contain" style={{maxWidth:"56px"}} />
+              </div>
               <span className="text-base font-black text-white leading-none tracking-tight">
                 Mayrit<span className="text-orange-500"> Cuisines</span>
               </span>
