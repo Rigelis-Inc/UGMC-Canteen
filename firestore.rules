@@ -126,7 +126,8 @@ service cloud.firestore {
     }
 
     match /settings/{settingId} {
-      allow read: if settingId == "orderSettings" || (signedIn() && isAdmin())
+      allow read: if settingId == "orderSettings" || settingId == "vipMenu"
+        || (signedIn() && isAdmin())
         || (signedIn() && settingId == "mealOrdering" && isMealRole());
       allow create: if signedIn() && isAdmin() && hasCreateTimestamps();
       allow update: if signedIn() && isAdmin() && hasUpdateTimestamp();

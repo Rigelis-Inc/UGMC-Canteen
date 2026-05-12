@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import {
-  collection, query, where, getDocs, addDoc, serverTimestamp, orderBy, doc, getDoc
+  collection, query, where, getDocs, addDoc, serverTimestamp, orderBy, doc, getDoc, limit
 } from "firebase/firestore";
 import { db } from "../../config/firebase";
 import { useAuth } from "../../contexts/AuthContext";
@@ -9,7 +9,7 @@ import { AlertTriangle, Send, X } from "lucide-react";
 
 const DAYS = ["SUNDAY","MONDAY","TUESDAY","WEDNESDAY","THURSDAY","FRIDAY","SATURDAY"];
 const PERIODS = ["BREAKFAST","LUNCH","SUPPER"];
-const PERIOD_TIMES = { BREAKFAST: "05:30", LUNCH: "11:30", SUPPER: "16:30" };
+const PERIOD_TIMES = { BREAKFAST: "06:00", LUNCH: "12:00", SUPPER: "17:00" };
 const LATE_REASONS = [
   { value: "NEW_PATIENT", label: "New patient" },
   { value: "MISSED_ORDER", label: "Missed order" },
@@ -35,7 +35,8 @@ export default function NurseMealOrdersPage() {
   const [period, setPeriod] = useState("LUNCH");
   const [orderDate, setOrderDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [patients, setPatients] = useState([]);
-  const [menuItems, setMenuItems] = useState({ mains: [], appetisers: [], desserts: [] });
+  const [menuItems, setMenuItems] = useState({ mains: [], sides: [], drinks: [] });
+  const [vipMenu, setVipMenu] = useState({ appetisers: [], desserts: [] });
   const [rows, setRows] = useState([]); // per-patient order row
   const [lateReason, setLateReason] = useState("NEW_PATIENT");
   const [lateDetails, setLateDetails] = useState("");
@@ -88,7 +89,14 @@ export default function NurseMealOrdersPage() {
 
   useEffect(() => { loadPatients(); }, [loadPatients]);
 
-  // Load menu for selected day + period + class
+  // Load VIP menu from settings once
+  useEffect(() => {
+    getDoc(doc(db, "settings", "vipMenu")).then(snap => {
+      if (snap.exists()) setVipMenu(snap.data());
+    }).catch(() => {});
+  }, []);
+
+  // Load menu for selected day + period (one doc, applies to all patients)
   useEffect(() => {
     async function loadMenu() {
       try {
@@ -96,24 +104,27 @@ export default function NurseMealOrdersPage() {
           query(collection(db, "mealMenus"),
             where("dayOfWeek", "==", dayOfWeek),
             where("mealPeriod", "==", period),
-            where("isActive", "==", true))
+            where("isActive", "==", true),
+            limit(1))
         );
-        const mains = [], appetisers = [], desserts = [];
-        snap.docs.forEach(d => {
-          const data = d.data();
-          (data.items || []).forEach(item => {
-            if (item.category === "MAIN") mains.push(item.name);
-            else if (item.category === "APPETISER") appetisers.push(item.name);
-            else if (item.category === "DESSERT") desserts.push(item.name);
+        if (!snap.empty) {
+          const data = snap.docs[0].data();
+          const items = data.items || [];
+          setMenuItems({
+            mains:  items.filter(i => i.category === "MAIN").map(i => i.name),
+            sides:  items.filter(i => i.category === "SIDE").map(i => i.name),
+            drinks: items.filter(i => i.category === "DRINK").map(i => i.name),
           });
-        });
-        setMenuItems({ mains: [...new Set(mains)], appetisers: [...new Set(appetisers)], desserts: [...new Set(desserts)] });
+        } else {
+          setMenuItems({ mains: [], sides: [], drinks: [] });
+        }
       } catch (e) {
         console.error(e);
-        setMenuItems({ mains: [], appetisers: [], desserts: [] });
+        setMenuItems({ mains: [], sides: [], drinks: [] });
       }
     }
     loadMenu();
+    setRows(r => r.map(x => ({ ...x, mainMeal: "", appetiser: "", dessert: "" })));
   }, [dayOfWeek, period]);
 
   function updateRow(idx, field, value) {
@@ -254,16 +265,23 @@ export default function NurseMealOrdersPage() {
       )}
 
       {/* Menu preview */}
-      {(menuItems.mains.length > 0 || menuItems.appetisers.length > 0) && (
+      {menuItems.mains.length > 0 && (
         <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
           <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide mb-2">
-            Today's {dayOfWeek} {period} Menu
+            {dayOfWeek} {PERIOD_LABEL[period]} Menu
           </p>
           <div className="flex flex-wrap gap-2">
-            {menuItems.mains.map(m => (
-              <span key={m} className="px-2 py-1 bg-white border border-blue-200 rounded-md text-xs text-blue-800">{m}</span>
+            {menuItems.mains.map((m, i) => (
+              <span key={m} className="px-2 py-1 bg-white border border-blue-200 rounded-md text-xs text-blue-800">
+                {i + 1}. {m}
+              </span>
             ))}
           </div>
+          {(menuItems.sides.length > 0 || menuItems.drinks.length > 0) && (
+            <p className="text-xs text-blue-500 mt-2">
+              Included: {[...menuItems.sides, ...menuItems.drinks].join(" · ")}
+            </p>
+          )}
         </div>
       )}
 
@@ -319,30 +337,59 @@ export default function NurseMealOrdersPage() {
                     <td className="px-3 py-2">
                       <span className="text-xs font-medium text-slate-600">{row.patientClass}</span>
                     </td>
-                    <td className="px-3 py-2">
-                      <select value={row.mainMeal} onChange={e => updateRow(idx, "mainMeal", e.target.value)}
-                        disabled={!row.include}
-                        className="w-full border border-slate-200 rounded-md px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary-500 min-w-[160px]">
-                        <option value="">— Select —</option>
-                        {menuItems.mains.map(m => <option key={m} value={m}>{m}</option>)}
-                      </select>
-                    </td>
-                    <td className="px-3 py-2">
-                      <select value={row.appetiser} onChange={e => updateRow(idx, "appetiser", e.target.value)}
-                        disabled={!row.include}
-                        className="w-full border border-slate-200 rounded-md px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary-500 min-w-[140px]">
-                        <option value="">— None —</option>
-                        {menuItems.appetisers.map(a => <option key={a} value={a}>{a}</option>)}
-                      </select>
-                    </td>
-                    <td className="px-3 py-2">
-                      <select value={row.dessert} onChange={e => updateRow(idx, "dessert", e.target.value)}
-                        disabled={!row.include}
-                        className="w-full border border-slate-200 rounded-md px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary-500 min-w-[140px]">
-                        <option value="">— None —</option>
-                        {menuItems.desserts.map(d => <option key={d} value={d}>{d}</option>)}
-                      </select>
-                    </td>
+                    {(() => {
+                      const noMenu = menuItems.mains.length === 0;
+                      const isVip = ["VIP", "VVIP"].includes(row.patientClass);
+                      const isNgTube = row.patientClass === "NG_TUBE";
+                      return (
+                        <>
+                          <td className="px-3 py-2">
+                            {isNgTube ? (
+                              <span className="text-xs font-medium text-red-600 bg-red-50 px-2 py-1 rounded">NG Tube — special feed</span>
+                            ) : noMenu ? (
+                              <span className="text-xs text-amber-600">No menu set for today</span>
+                            ) : (
+                              <select value={row.mainMeal} onChange={e => updateRow(idx, "mainMeal", e.target.value)}
+                                disabled={!row.include}
+                                className="w-full border border-slate-200 rounded-md px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary-500 min-w-[200px]">
+                                <option value="">— Select meal —</option>
+                                {menuItems.mains.map((x, i) => <option key={x} value={x}>{i + 1}. {x}</option>)}
+                              </select>
+                            )}
+                          </td>
+                          {/* Appetiser — VIP/VVIP only */}
+                          <td className="px-3 py-2">
+                            {isVip ? (
+                              <select value={row.appetiser} onChange={e => updateRow(idx, "appetiser", e.target.value)}
+                                disabled={!row.include}
+                                className="w-full border border-amber-200 bg-amber-50 rounded-md px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-amber-400 min-w-[140px]">
+                                <option value="">— None —</option>
+                                {(vipMenu.appetisers || []).map(a => (
+                                  <option key={a.code} value={a.name}>{a.code}. {a.name}</option>
+                                ))}
+                              </select>
+                            ) : (
+                              <span className="text-xs text-slate-300">—</span>
+                            )}
+                          </td>
+                          {/* Dessert — VIP/VVIP only */}
+                          <td className="px-3 py-2">
+                            {isVip ? (
+                              <select value={row.dessert} onChange={e => updateRow(idx, "dessert", e.target.value)}
+                                disabled={!row.include}
+                                className="w-full border border-amber-200 bg-amber-50 rounded-md px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-amber-400 min-w-[140px]">
+                                <option value="">— None —</option>
+                                {(vipMenu.desserts || []).map(d => (
+                                  <option key={d.code} value={d.name}>{d.code}. {d.name}</option>
+                                ))}
+                              </select>
+                            ) : (
+                              <span className="text-xs text-slate-300">—</span>
+                            )}
+                          </td>
+                        </>
+                      );
+                    })()}
                     <td className="px-3 py-2">
                       <input value={row.notes} onChange={e => updateRow(idx, "notes", e.target.value)}
                         disabled={!row.include}
