@@ -19,6 +19,10 @@ const ReportsPage = lazy(() => import("./pages/reports/ReportsPage"));
 const AuditLogsPage = lazy(() => import("./pages/audit-logs/AuditLogsPage"));
 const UsersPage = lazy(() => import("./pages/users/UsersPage"));
 const SettingsPage = lazy(() => import("./pages/settings/SettingsPage"));
+const MenuManagementPage = lazy(() => import("./pages/admin-menu/MenuManagementPage"));
+const OrdersPage = lazy(() => import("./pages/admin-orders/OrdersPage"));
+const OrderDetailPage = lazy(() => import("./pages/admin-orders/OrderDetailPage"));
+const OrderSettingsPage = lazy(() => import("./pages/admin-orders/OrderSettingsPage"));
 
 function ShellLoader() {
   return (

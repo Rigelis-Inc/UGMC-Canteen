@@ -68,7 +68,7 @@ const navGroups = [
   },
 ];
 
-function NavGroup({ group, collapsed, isOpen, onToggle, location, onNav }) {
+function NavGroup({ group, collapsed, isOpen, onToggle, location, onNav, badge }) {
   const hasActive = group.items.some(
     (item) =>
       location.pathname === item.path ||
@@ -98,6 +98,11 @@ function NavGroup({ group, collapsed, isOpen, onToggle, location, onNav }) {
                 <span className="absolute inset-0 bg-gradient-to-r from-primary-600 to-primary-500 rounded-lg shadow-lg shadow-primary-600/20" />
               )}
               <item.icon size={16} className="relative flex-shrink-0" />
+              {badge > 0 && item.path === "/admin/orders" && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] flex items-center justify-center rounded-full text-[9px] font-bold bg-amber-500 text-white px-0.5 border-2 border-slate-900">
+                  {badge > 9 ? "9+" : badge}
+                </span>
+              )}
             </Link>
           );
         })}
@@ -150,6 +155,11 @@ function NavGroup({ group, collapsed, isOpen, onToggle, location, onNav }) {
                 )}
                 <item.icon size={14} className="relative flex-shrink-0 opacity-70" />
                 <span className="relative truncate">{item.label}</span>
+                {badge > 0 && item.path === "/admin/orders" && (
+                  <span className="relative ml-auto min-w-[18px] h-[18px] flex items-center justify-center rounded-full text-[10px] font-bold bg-amber-500 text-white px-1">
+                    {badge > 9 ? "9+" : badge}
+                  </span>
+                )}
               </Link>
             );
           })}
@@ -163,10 +173,17 @@ export default function Sidebar({ collapsed, onToggle }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [openGroup, setOpenGroup] = useState("inventory");
+  const [pendingOrders, setPendingOrders] = useState(0);
   const location = useLocation();
   const navigate = useNavigate();
   const { userProfile, logout } = useAuth();
   const role = userProfile?.role;
+
+  useEffect(() => {
+    const q = query(collection(db, "foodOrders"), where("status", "==", "PENDING"));
+    const unsub = onSnapshot(q, (snap) => setPendingOrders(snap.size));
+    return () => unsub();
+  }, []);
 
   const filteredGroups = navGroups
     .map((group) => ({
@@ -313,6 +330,7 @@ export default function Sidebar({ collapsed, onToggle }) {
                 onToggle={() => handleToggle(group.id)}
                 location={location}
                 onNav={handleNav}
+                badge={pendingOrders}
               />
             ))}
           </div>
