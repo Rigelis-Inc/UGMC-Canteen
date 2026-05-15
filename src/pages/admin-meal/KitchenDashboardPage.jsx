@@ -1,61 +1,67 @@
-import { useEffect, useState, useCallback } from "react";
+﻿import { useEffect, useState, useCallback } from "react";
 import {
   collection, query, where, getDocs, updateDoc, addDoc, doc,
-  serverTimestamp, orderBy, onSnapshot
+  serverTimestamp
 } from "firebase/firestore";
 import { db } from "../../config/firebase";
 import { useAuth } from "../../contexts/AuthContext";
+import { sendDeliveredMealSms } from "../../lib/mealSms";
 import { format } from "date-fns";
 import {
   ChefHat, Clock, CheckCircle, Truck, AlertTriangle, ChevronDown,
   BarChart2, Filter
 } from "lucide-react";
-import Layout from "../../components/layout/Layout";
 
 const PERIODS = ["BREAKFAST","LUNCH","SUPPER"];
 
 const STATUS_FLOW = {
-  REQUESTED: { next: "PREPARING", label: "Start Preparing", color: "bg-orange-100 text-orange-700", btnColor: "bg-yellow-500 hover:bg-yellow-600 text-white" },
-  PREPARING: { next: "SERVED", label: "Mark Served", color: "bg-yellow-100 text-yellow-700", btnColor: "bg-green-500 hover:bg-green-600 text-white" },
-  SERVED: { next: "DELIVERED", label: "Mark Delivered", color: "bg-green-100 text-green-700", btnColor: "bg-emerald-600 hover:bg-emerald-700 text-white" },
+  REQUESTED: { next: "PREPARING", label: "Start Preparing", color: "bg-amber-100 text-amber-700", btnColor: "bg-amber-500 hover:bg-amber-600 text-white" },
+  PREPARING: { next: "DELIVERED", label: "Mark Delivered", color: "bg-blue-100 text-blue-700", btnColor: "bg-blue-500 hover:bg-blue-600 text-white" },
   DELIVERED: { next: null, color: "bg-emerald-100 text-emerald-700" },
   CANCELLED: { next: null, color: "bg-red-100 text-red-700" },
 };
 
 export default function KitchenDashboardPage() {
-  const { userProfile } = useAuth();
+  const { currentUser, userProfile } = useAuth();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [periodTab, setPeriodTab] = useState("ALL");
-  const [viewMode, setViewMode] = useState("list"); // list | summary | ward
+  const [viewMode, setViewMode] = useState("ward"); // list | summary | ward
   const [showLate, setShowLate] = useState(false);
   const today = format(new Date(), "yyyy-MM-dd");
 
-  useEffect(() => {
-    const q = query(
-      collection(db, "wardMealOrders"),
-      where("orderDate", "==", today),
-      orderBy("requestedAt", "asc")
-    );
-    const unsub = onSnapshot(q, (snap) => {
-      setOrders(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+  const fetchOrders = useCallback(async () => {
+    try {
+      const snap = await getDocs(query(
+        collection(db, "wardMealOrders"),
+        where("orderDate", "==", today)
+      ));
+      const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      docs.sort((a, b) => (a.requestedAt?.seconds ?? 0) - (b.requestedAt?.seconds ?? 0));
+      setOrders(docs);
+    } catch (e) {
+      console.error(e);
+    } finally {
       setLoading(false);
-    }, (err) => {
-      console.error(err);
-      setLoading(false);
-    });
-    return unsub;
+    }
   }, [today]);
+
+  useEffect(() => {
+    fetchOrders();
+    const id = setInterval(fetchOrders, 30000);
+    return () => clearInterval(id);
+  }, [fetchOrders]);
 
   async function updateStatus(order, newStatus) {
     const now = serverTimestamp();
+    const actorUid = currentUser?.uid;
+    if (!actorUid) {
+      console.error("Cannot update order status without an authenticated user.");
+      return;
+    }
     const updates = { status: newStatus, updatedAt: now };
-    if (newStatus === "SERVED") {
-      updates.servedBy = userProfile.uid;
-      updates.servedByName = userProfile.fullName || "";
-      updates.servedAt = now;
-    } else if (newStatus === "DELIVERED") {
-      updates.deliveredBy = userProfile.uid;
+    if (newStatus === "DELIVERED") {
+      updates.deliveredBy = actorUid;
       updates.deliveredByName = userProfile.fullName || "";
       updates.deliveredAt = now;
     }
@@ -65,24 +71,36 @@ export default function KitchenDashboardPage() {
       orderId: order.id,
       previousStatus: order.status,
       newStatus,
-      changedBy: userProfile.uid,
+      changedBy: actorUid,
       changedByName: userProfile.fullName || "",
       note: "",
       createdAt: serverTimestamp(),
     });
+    if (newStatus === "DELIVERED") {
+      await sendDeliveredMealSms(db, { ...order, status: newStatus }).catch((smsError) => {
+        console.warn("Failed to send delivered SMS:", smsError);
+      });
+    }
+    fetchOrders();
   }
 
   async function cancelOrder(order) {
     const reason = prompt("Cancellation reason:");
     if (!reason) return;
+    const actorUid = currentUser?.uid;
+    if (!actorUid) {
+      console.error("Cannot cancel order without an authenticated user.");
+      return;
+    }
     await updateDoc(doc(db, "wardMealOrders", order.id), {
       status: "CANCELLED",
-      cancelledBy: userProfile.uid,
+      cancelledBy: actorUid,
       cancelledByName: userProfile.fullName || "",
       cancelledAt: serverTimestamp(),
       cancellationReason: reason,
       updatedAt: serverTimestamp(),
     });
+    fetchOrders();
   }
 
   const filtered = orders.filter(o =>
@@ -108,14 +126,12 @@ export default function KitchenDashboardPage() {
     total: filtered.length,
     requested: filtered.filter(o => o.status === "REQUESTED").length,
     preparing: filtered.filter(o => o.status === "PREPARING").length,
-    served: filtered.filter(o => o.status === "SERVED").length,
     delivered: filtered.filter(o => o.status === "DELIVERED").length,
     late: filtered.filter(o => o.isLate).length,
   };
 
   return (
-    <Layout>
-      <div className="space-y-6">
+    <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
@@ -133,14 +149,13 @@ export default function KitchenDashboardPage() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
           {[
             { label: "Total", value: stats.total, color: "bg-slate-50 text-slate-700" },
-            { label: "Requested", value: stats.requested, color: "bg-orange-50 text-orange-700" },
-            { label: "Preparing", value: stats.preparing, color: "bg-yellow-50 text-yellow-700" },
-            { label: "Served", value: stats.served, color: "bg-green-50 text-green-700" },
+            { label: "Requested", value: stats.requested, color: "bg-amber-50 text-amber-700" },
+            { label: "Preparing", value: stats.preparing, color: "bg-blue-50 text-blue-700" },
             { label: "Delivered", value: stats.delivered, color: "bg-emerald-50 text-emerald-700" },
-            { label: "Late", value: stats.late, color: "bg-amber-50 text-amber-700" },
+            { label: "Late", value: stats.late, color: "bg-primary-50 text-primary-700" },
           ].map(s => (
             <div key={s.label} className={`rounded-xl p-3 ${s.color} border border-current/10`}>
               <p className="text-xl font-bold">{s.value}</p>
@@ -176,7 +191,7 @@ export default function KitchenDashboardPage() {
           <ListView orders={filtered} onUpdate={updateStatus} onCancel={cancelOrder} />
         )}
       </div>
-    </Layout>
+    </div>
   );
 }
 
@@ -280,7 +295,7 @@ function SummaryView({ summary }) {
 }
 
 function WardView({ wardGroups, onUpdate, onCancel }) {
-  const [expanded, setExpanded] = useState(Object.keys(wardGroups)[0] || null);
+  const [expanded, setExpanded] = useState(null);
   return (
     <div className="space-y-3">
       {Object.entries(wardGroups).map(([ward, orders]) => (
@@ -296,7 +311,7 @@ function WardView({ wardGroups, onUpdate, onCancel }) {
             </div>
             <div className="flex gap-2 text-xs">
               <span className="text-orange-600">{orders.filter(o => o.status === "REQUESTED").length} pending</span>
-              <span className="text-green-600">{orders.filter(o => o.status === "SERVED" || o.status === "DELIVERED").length} done</span>
+              <span className="text-emerald-600">{orders.filter(o => o.status === "DELIVERED").length} done</span>
             </div>
           </button>
           {expanded === ward && (

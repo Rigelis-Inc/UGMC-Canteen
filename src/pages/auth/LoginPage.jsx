@@ -3,10 +3,20 @@ import { Navigate } from "react-router-dom";
 import { signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "../../config/firebase";
 import { useAuth } from "../../contexts/AuthContext";
-import { Mail, Lock, AlertCircle, CheckCircle2, Loader2, Eye, EyeOff, ArrowLeft } from "lucide-react";
+import { getRoleHomePath } from "../../lib/permissions";
+import {
+  Mail,
+  Lock,
+  AlertCircle,
+  CheckCircle2,
+  Loader2,
+  Eye,
+  EyeOff,
+  ArrowLeft,
+} from "lucide-react";
 
 export default function LoginPage() {
-  const { loading: authLoading, currentUser } = useAuth();
+  const { loading: authLoading, currentUser, userProfile } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -26,8 +36,33 @@ export default function LoginPage() {
     );
   }
 
-  if (currentUser) {
-    return <Navigate to="/admin/dashboard" replace />;
+  if (currentUser && !userProfile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-950 px-6">
+        <div className="w-full max-w-[360px] rounded-2xl border border-slate-800 bg-slate-900 p-6 text-center shadow-lg">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary-500/10 text-primary-300">
+            <Loader2 size={20} className="animate-spin" />
+          </div>
+          <h2 className="text-lg font-bold text-white">Loading your account</h2>
+          <p className="mt-2 text-sm leading-6 text-slate-400">
+            We found a signed-in user, but the profile is still loading. If this stays here, reload the page.
+          </p>
+          <div className="mt-6 flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-3 text-sm font-semibold text-slate-200 transition-colors hover:bg-slate-800"
+              >
+                Reload page
+              </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (currentUser && userProfile) {
+    return <Navigate to={getRoleHomePath(userProfile.role)} replace />;
   }
 
   async function handleSubmit(e) {
@@ -55,7 +90,10 @@ export default function LoginPage() {
 
   async function handleReset(e) {
     e.preventDefault();
-    if (!email) { setError("Enter your email address first."); return; }
+    if (!email) {
+      setError("Enter your email address first.");
+      return;
+    }
     try {
       await sendPasswordResetEmail(auth, email);
       setResetSent(true);
@@ -67,65 +105,53 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex bg-slate-950">
-      {/* Left Panel - Branding */}
-      <div className="hidden lg:flex lg:w-5/12 relative overflow-hidden" style={{background: "linear-gradient(160deg, #ea6a10 0%, #c94f00 100%)"}}>
-        {/* Subtle radial glow behind logo */}
+      <div
+        className="hidden lg:flex lg:w-[38%] relative overflow-hidden"
+        style={{ background: "linear-gradient(160deg, #ea6a10 0%, #c94f00 100%)" }}
+      >
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="w-[420px] h-[420px] rounded-full bg-white/10 blur-3xl" />
+          <div className="w-[320px] h-[320px] rounded-full bg-white/10 blur-3xl" />
         </div>
-        {/* Large faint circle top-right */}
-        <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full border border-white/10" />
-        {/* Large faint circle bottom-left */}
-        <div className="absolute -bottom-20 -left-20 w-80 h-80 rounded-full border border-white/10" />
+        <div className="absolute -top-24 -right-24 w-80 h-80 rounded-full border border-white/10" />
+        <div className="absolute -bottom-20 -left-20 w-72 h-72 rounded-full border border-white/10" />
 
-        {/* Content */}
-        <div className="relative z-10 flex flex-col items-center justify-center w-full h-full px-10 py-16">
-          {/* Logo */}
-          <div className="flex items-center justify-center mb-8">
+        <div className="relative z-10 flex flex-col items-center justify-center w-full h-full px-8 py-12">
+          <div className="flex items-center justify-center mb-6">
             <div
               className="flex items-center justify-center"
               style={{
                 background: "white",
                 borderRadius: "50% / 45%",
-                padding: "18px 26px",
-                boxShadow: "0 12px 48px rgba(0,0,0,0.28), 0 2px 8px rgba(0,0,0,0.15)",
+                padding: "14px 22px",
+                boxShadow: "0 10px 36px rgba(0,0,0,0.22), 0 2px 8px rgba(0,0,0,0.12)",
               }}
             >
               <img
                 src="/mayrit_logo.png"
                 alt="Mayrit Cuisines Limited"
-                className="w-[240px] h-auto object-contain"
+                className="w-[180px] h-auto object-contain"
               />
             </div>
           </div>
 
-          {/* Divider */}
-          <div className="flex items-center gap-3 w-48 mb-6">
+          <div className="flex items-center gap-3 w-36 mb-5">
             <div className="flex-1 h-px bg-white/20" />
             <div className="w-1.5 h-1.5 rounded-full bg-white/30" />
             <div className="flex-1 h-px bg-white/20" />
           </div>
 
-          {/* Tagline */}
-          <p className="text-white/50 text-xs tracking-[0.25em] uppercase font-semibold text-center">
+          <p className="text-white/45 text-[9px] tracking-[0.22em] uppercase font-semibold text-center">
             Inventory Management System
           </p>
         </div>
 
-        {/* Copyright bottom */}
         <p className="absolute bottom-5 left-0 right-0 text-center text-white/25 text-xs">
           &copy; {new Date().getFullYear()} Mayrit Cuisines Limited
         </p>
       </div>
 
-      {/* Right Panel - Form */}
-      <div className="flex-1 flex items-center justify-center px-6 py-12 sm:px-12 lg:px-16 relative">
-        {/* Mobile top branding */}
-        <div className="lg:hidden absolute top-5 left-1/2 -translate-x-1/2">
-          <img src="/mayrit_logo.png" alt="Mayrit Cuisines" className="h-20 w-auto object-contain" style={{filter:"drop-shadow(0 4px 12px rgba(0,0,0,0.20))"}} />
-        </div>
-
-        <div className="w-full max-w-sm">
+      <div className="flex-1 flex items-center justify-center px-6 py-10 sm:px-12 lg:px-12">
+        <div className="w-full max-w-[340px] lg:max-w-sm">
           {showReset ? (
             <div className="animate-fadeIn">
               {resetSent ? (
@@ -139,7 +165,11 @@ export default function LoginPage() {
                     <span className="text-white font-medium">{email}</span>.
                   </p>
                   <button
-                    onClick={() => { setShowReset(false); setResetSent(false); setError(""); }}
+                    onClick={() => {
+                      setShowReset(false);
+                      setResetSent(false);
+                      setError("");
+                    }}
                     className="w-full py-3 border border-slate-700 rounded-xl text-sm font-medium text-slate-300 hover:bg-slate-800 hover:border-slate-600 transition-all"
                   >
                     Back to sign in
@@ -147,17 +177,26 @@ export default function LoginPage() {
                 </div>
               ) : (
                 <>
+                  <div className="lg:hidden flex justify-center mb-6">
+                    <div className="flex items-center justify-center rounded-2xl bg-white/10 p-3">
+                      <img src="/mayrit_logo.png" alt="Mayrit Cuisines" className="h-12 w-auto object-contain" />
+                    </div>
+                  </div>
+
                   <button
                     type="button"
-                    onClick={() => { setShowReset(false); setError(""); }}
-                    className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-300 mb-8 transition-colors group"
+                    onClick={() => {
+                      setShowReset(false);
+                      setError("");
+                    }}
+                    className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-300 mb-6 transition-colors group"
                   >
                     <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" />
-                    Back
+                    Back to sign in
                   </button>
 
-                  <div className="mb-8">
-                    <h2 className="text-xl font-bold text-white">Reset password</h2>
+                  <div className="mb-6">
+                    <h2 className="text-lg lg:text-xl font-bold text-white">Reset password</h2>
                     <p className="text-sm text-slate-400 mt-1">Enter your email to receive a reset link.</p>
                   </div>
 
@@ -195,14 +234,21 @@ export default function LoginPage() {
             </div>
           ) : (
             <div className="animate-fadeIn">
-              {/* Mobile logo */}
-              <div className="lg:hidden flex flex-col items-center mb-8 pt-14">
-                <img src="/mayrit_logo.png" alt="Mayrit Cuisines" className="h-28 w-auto object-contain mb-3" style={{filter:"drop-shadow(0 4px 16px rgba(0,0,0,0.18))"}} />
+              <div className="lg:hidden flex flex-col items-center mb-8">
+                <div className="mb-5 flex items-center justify-center rounded-2xl bg-white/10 p-4">
+                  <img
+                    src="/mayrit_logo.png"
+                    alt="Mayrit Cuisines"
+                    className="h-16 w-auto object-contain"
+                    style={{ filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.25))" }}
+                  />
+                </div>
+                <h2 className="text-xl font-bold text-white">Welcome back</h2>
+                <p className="mt-1 text-sm text-slate-400">Sign in to your account</p>
               </div>
 
-              {/* Desktop heading */}
-              <div className="hidden lg:block mb-8">
-                <h2 className="text-xl font-bold text-white">Welcome back</h2>
+              <div className="hidden lg:block mb-6">
+                <h2 className="text-lg lg:text-xl font-bold text-white">Welcome back</h2>
                 <p className="text-sm text-slate-400 mt-1">Sign in to your account.</p>
               </div>
 
@@ -235,10 +281,15 @@ export default function LoginPage() {
 
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <label htmlFor="password" className="text-sm font-medium text-slate-300">Password</label>
+                    <label htmlFor="password" className="text-sm font-medium text-slate-300">
+                      Password
+                    </label>
                     <button
                       type="button"
-                      onClick={() => { setShowReset(true); setError(""); }}
+                      onClick={() => {
+                        setShowReset(true);
+                        setError("");
+                      }}
                       className="text-xs text-primary-400 hover:text-primary-300 font-medium transition-colors"
                     >
                       Forgot password?
@@ -273,8 +324,12 @@ export default function LoginPage() {
                   className="w-full bg-primary-600 hover:bg-primary-500 text-white py-3 rounded-xl text-sm font-semibold transition-all shadow-lg shadow-primary-600/25 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {loading ? (
-                    <><Loader2 size={15} className="animate-spin" /> Signing in…</>
-                  ) : "Sign in"}
+                    <>
+                      <Loader2 size={15} className="animate-spin" /> Signing in...
+                    </>
+                  ) : (
+                    "Sign in"
+                  )}
                 </button>
               </form>
 
@@ -288,4 +343,3 @@ export default function LoginPage() {
     </div>
   );
 }
-

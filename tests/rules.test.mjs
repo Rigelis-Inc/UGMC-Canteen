@@ -41,10 +41,10 @@ test("firestore rules allow public read of active menu items", async () => {
   assert.match(rules, /canManageMenu\(\)/);
 });
 
-test("firestore rules allow public create of food orders but not read", async () => {
+test("firestore rules allow public create of food orders and signed-in order management", async () => {
   const rules = await readProjectFile("firestore.rules");
   assert.match(rules, /match \/foodOrders\/\{orderId\}/);
-  assert.match(rules, /allow create: if request\.resource\.data\.customerName is string/);
+  assert.match(rules, /allow create: if validFoodOrderData\(\);/);
   assert.match(rules, /allow read: if signedIn\(\) && canViewOrders\(\)/);
   assert.match(rules, /allow update: if signedIn\(\) && canManageOrders\(\)/);
 });
@@ -52,6 +52,7 @@ test("firestore rules allow public create of food orders but not read", async ()
 test("firestore rules protect orderStatusLogs from modification", async () => {
   const rules = await readProjectFile("firestore.rules");
   assert.match(rules, /match \/orderStatusLogs\/\{logId\}/);
+  assert.match(rules, /allow create: if signedIn\(\) && canManageOrders\(\)/);
   assert.match(rules, /allow update, delete: if false;/);
 });
 
@@ -64,6 +65,16 @@ test("firestore rules allow public read of publicOrderTracking", async () => {
   const rules = await readProjectFile("firestore.rules");
   assert.match(rules, /match \/publicOrderTracking\/\{trackingId\}/);
   assert.match(rules, /allow read: if true;/);
+  assert.match(rules, /allow create: if validPublicTrackingData\(\);/);
+});
+
+test("firestore rules validate nurse patient documents using patientName", async () => {
+  const rules = await readProjectFile("firestore.rules");
+  assert.match(rules, /match \/patients\/\{patientId\}/);
+  assert.match(rules, /allow create: if signedIn\(\) && isMealRole\(\)[\s\S]*request\.resource\.data\.patientName is string/);
+  assert.match(rules, /allow update: if signedIn\(\) && isMealRole\(\)[\s\S]*request\.resource\.data\.patientName is string/);
+  assert.match(rules, /request\.resource\.data\.patientClass is string/);
+  assert.match(rules, /request\.resource\.data\.status is string/);
 });
 
 test("storage rules allow public read of menu item images", async () => {

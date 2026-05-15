@@ -1,8 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../../config/firebase";
-import { Save, Info } from "lucide-react";
-import Layout from "../../components/layout/Layout";
+import { Save, Info, Crown, CheckCircle2, AlertCircle } from "lucide-react";
 
 const DAYS = ["MONDAY","TUESDAY","WEDNESDAY","THURSDAY","FRIDAY","SATURDAY","SUNDAY"];
 
@@ -10,6 +9,7 @@ const DEFAULT_SETTINGS = {
   orderingEnabled: true,
   allowLateOrders: true,
   requireLateReason: true,
+  supportContactNumber: "0000000000",
   breakfastOpenTime: "05:00",
   breakfastCutoffTime: "05:30",
   lunchOpenTime: "11:00",
@@ -19,18 +19,49 @@ const DEFAULT_SETTINGS = {
   activeDays: ["MONDAY","TUESDAY","WEDNESDAY","THURSDAY","FRIDAY","SATURDAY","SUNDAY"],
 };
 
+const DEFAULT_VIP = {
+  appetisers: [
+    { code: "A1", name: "Garden Salad" },
+    { code: "A2", name: "Tuna Salad" },
+    { code: "A3", name: "French Salad" },
+    { code: "A4", name: "Mixed Salad" },
+    { code: "A5", name: "Chicken Salad" },
+  ],
+  desserts: [
+    { code: "D1", name: "Yoghurt" },
+    { code: "D2", name: "Fruit Salad" },
+    { code: "D3", name: "Coupe Jack" },
+    { code: "D4", name: "Pancake" },
+    { code: "D5", name: "Beetroot, Banana & Ginger Smoothie" },
+    { code: "D6", name: "Orange, Carrot & Mango Smoothie" },
+    { code: "D7", name: "Tropical Green" },
+  ],
+};
+
 export default function MealSettingsPage() {
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
+  const [toast, setToast] = useState(null);
+  const toastTimerRef = useRef(null);
+
+  // VIP menu state
+  const [vipMenu, setVipMenu] = useState(DEFAULT_VIP);
 
   useEffect(() => {
     async function load() {
       try {
-        const snap = await getDoc(doc(db, "settings", "mealOrdering"));
-        if (snap.exists()) {
-          setSettings({ ...DEFAULT_SETTINGS, ...snap.data() });
+        const [settingsSnap, vipSnap] = await Promise.all([
+          getDoc(doc(db, "settings", "mealOrdering")),
+          getDoc(doc(db, "settings", "vipMenu")),
+        ]);
+        if (settingsSnap.exists()) setSettings({ ...DEFAULT_SETTINGS, ...settingsSnap.data() });
+        if (vipSnap.exists()) {
+          const d = vipSnap.data();
+          setVipMenu({
+            appetisers: d.appetisers?.length ? d.appetisers : DEFAULT_VIP.appetisers,
+            desserts:   d.desserts?.length   ? d.desserts   : DEFAULT_VIP.desserts,
+          });
         }
       } catch (e) {
         console.error(e);
@@ -41,21 +72,54 @@ export default function MealSettingsPage() {
     load();
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (toastTimerRef.current) {
+        clearTimeout(toastTimerRef.current);
+      }
+    };
+  }, []);
+
+  function showToast(type, message) {
+    if (toastTimerRef.current) {
+      clearTimeout(toastTimerRef.current);
+    }
+    setToast({ type, message });
+    toastTimerRef.current = setTimeout(() => {
+      setToast(null);
+      toastTimerRef.current = null;
+    }, 2600);
+  }
+
   async function handleSave(e) {
     e.preventDefault();
     setSaving(true);
     try {
-      await setDoc(doc(db, "settings", "mealOrdering"), {
-        ...settings,
-        updatedAt: serverTimestamp(),
-      });
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2500);
+      await Promise.all([
+        setDoc(doc(db, "settings", "mealOrdering"), {
+          ...settings,
+          updatedAt: serverTimestamp(),
+        }),
+        setDoc(doc(db, "settings", "vipMenu"), {
+          appetisers: vipMenu.appetisers,
+          desserts:   vipMenu.desserts,
+          updatedAt:  serverTimestamp(),
+        }),
+      ]);
+      showToast("success", "Settings saved");
     } catch (err) {
       console.error(err);
+      showToast("error", "Failed to save settings");
     } finally {
       setSaving(false);
     }
+  }
+
+  function updateVipItem(group, idx, value) {
+    setVipMenu(v => ({
+      ...v,
+      [group]: v[group].map((item, i) => i === idx ? { ...item, name: value } : item),
+    }));
   }
 
   function toggleDay(day) {
@@ -68,15 +132,43 @@ export default function MealSettingsPage() {
   }
 
   if (loading) {
-    return <Layout><div className="p-8 text-center text-slate-400 text-sm">Loading settings…</div></Layout>;
+    return <div className="p-8 text-center text-slate-400 text-sm">Loading settings…</div>;
   }
 
   return (
-    <Layout>
-      <form onSubmit={handleSave} className="space-y-8 max-w-2xl">
-        <div>
-          <h1 className="text-xl font-bold text-slate-900">Meal Ordering Settings</h1>
-          <p className="text-sm text-slate-500">Configure ordering windows and cutoff times</p>
+    <div className="max-w-4xl mx-auto space-y-10">
+      <form onSubmit={handleSave} className="space-y-8">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <h1 className="text-xl font-bold text-slate-900">Meal Ordering Settings</h1>
+            <p className="text-sm text-slate-500">Configure ordering windows and cutoff times</p>
+          </div>
+          <div className="flex flex-col items-end gap-2 flex-shrink-0">
+            <button type="submit" disabled={saving}
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 disabled:opacity-60 transition-colors shadow-sm">
+              <Save size={15} /> {saving ? "Saving\u2026" : "Save All Settings"}
+            </button>
+            {toast && (
+              <div
+                className={`inline-flex items-center gap-2 self-end -mt-1 rounded-full px-3 py-1.5 shadow-sm border backdrop-blur-sm animate-fadeIn origin-top-right ${
+                  toast.type === "success"
+                    ? "bg-emerald-950/95 border-emerald-800 text-emerald-100"
+                    : "bg-red-950/95 border-red-800 text-red-100"
+                }`}
+                role="status"
+                aria-live="polite"
+                >
+                  {toast.type === "success" ? (
+                    <CheckCircle2 size={14} className="text-emerald-400 flex-shrink-0" />
+                  ) : (
+                    <AlertCircle size={14} className="text-red-400 flex-shrink-0" />
+                  )}
+                <span className="text-xs font-medium whitespace-nowrap">
+                  {toast.type === "success" ? "Saved" : "Save failed"}
+                </span>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* General */}
@@ -143,15 +235,86 @@ export default function MealSettingsPage() {
           </div>
         </Section>
 
-        <div className="flex items-center gap-3">
-          <button type="submit" disabled={saving}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 disabled:opacity-60 transition-colors shadow-sm">
-            <Save size={15} /> {saving ? "Saving…" : "Save Settings"}
-          </button>
-          {saved && <span className="text-sm text-green-600">Settings saved ✓</span>}
+        <Section title="SMS Notifications">
+          <div className="flex items-start gap-2 text-xs text-slate-500 bg-slate-50 rounded-lg px-3 py-2.5">
+            <Info size={13} className="mt-0.5 flex-shrink-0" />
+            When an order is marked delivered, we queue an SMS for the patient and include this contact number for any issues.
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1.5">Issue contact number</label>
+            <input
+              type="tel"
+              value={settings.supportContactNumber || ""}
+              onChange={e => setSettings(s => ({ ...s, supportContactNumber: e.target.value }))}
+              placeholder="e.g. 0000000000"
+              className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            />
+            <p className="mt-1.5 text-xs text-slate-500">
+              This number will appear in the delivered SMS message until the SMS provider is configured.
+            </p>
+          </div>
+        </Section>
+
+        {/* VIP Food Menu */}
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+          <div className="px-6 py-4 border-b border-slate-100 bg-slate-50 flex items-center gap-3">
+            <div className="p-2 bg-primary-100 rounded-lg">
+              <Crown size={18} className="text-primary-600" />
+            </div>
+            <div>
+              <h2 className="font-semibold text-slate-800">VIP / VVIP Food Menu</h2>
+              <p className="text-xs text-slate-500 mt-0.5">Appetisers and desserts shown to VIP &amp; VVIP patients</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100">
+            {/* Appetisers */}
+            <div className="px-6 py-5">
+              <p className="text-xs font-semibold uppercase tracking-wide text-primary-600 mb-4">Appetisers</p>
+              <div className="space-y-3">
+                {vipMenu.appetisers.map((item, idx) => (
+                  <div key={item.code} className="flex items-center gap-3">
+                    <span className="w-12 text-center text-xs font-bold text-primary-700 bg-primary-50 border border-primary-200 rounded-lg py-2 flex-shrink-0">
+                      {item.code}
+                    </span>
+                    <input
+                      type="text"
+                      value={item.name}
+                      onChange={e => updateVipItem("appetisers", idx, e.target.value)}
+                      placeholder={`Appetiser ${item.code}`}
+                      className="flex-1 border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 bg-slate-50 focus:bg-white transition-colors"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Desserts */}
+            <div className="px-6 py-5">
+              <p className="text-xs font-semibold uppercase tracking-wide text-violet-600 mb-4">Desserts</p>
+              <div className="space-y-3">
+                {vipMenu.desserts.map((item, idx) => (
+                  <div key={item.code} className="flex items-center gap-3">
+                    <span className="w-12 text-center text-xs font-bold text-violet-700 bg-violet-50 border border-violet-200 rounded-lg py-2 flex-shrink-0">
+                      {item.code}
+                    </span>
+                    <input
+                      type="text"
+                      value={item.name}
+                      onChange={e => updateVipItem("desserts", idx, e.target.value)}
+                      placeholder={`Dessert ${item.code}`}
+                      className="flex-1 border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 bg-slate-50 focus:bg-white transition-colors"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
+
       </form>
-    </Layout>
+
+      </div>
   );
 }
 

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { collection, query, where, getDocs, orderBy, limit } from "firebase/firestore";
 import { db } from "../../config/firebase";
 import { useAuth } from "../../contexts/AuthContext";
@@ -15,6 +16,8 @@ import {
   TrendingUp,
   TrendingDown,
   Calendar,
+  ChefHat,
+  ArrowRight,
 } from "lucide-react";
 
 export default function DashboardPage() {
@@ -168,16 +171,16 @@ export default function DashboardPage() {
       ) : (
         <div className="space-y-5 animate-fadeIn">
           {/* Primary stats */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
             {primaryStats.map((stat) => (
-              <div key={stat.label} className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-sm hover:border-gray-300 transition-all duration-200">
-                <div className="flex items-start justify-between mb-2">
-                  <p className="text-xs font-medium text-gray-500">{stat.label}</p>
-                  <div className={`p-1.5 rounded-md bg-gradient-to-br ${stat.color} shadow-sm`}>
-                    <stat.icon size={14} className="text-white" />
+              <div key={stat.label} className="bg-white rounded-lg border border-gray-200 px-3 py-3 hover:border-gray-300 transition-all duration-200">
+                <div className="flex items-start justify-between mb-1.5">
+                  <p className="text-[11px] font-medium text-gray-500 leading-tight">{stat.label}</p>
+                  <div className={`p-1 rounded-md bg-gradient-to-br ${stat.color} shadow-sm`}>
+                    <stat.icon size={12} className="text-white" />
                   </div>
                 </div>
-                <p className="text-xl font-bold text-gray-900 tracking-tight leading-none">{stat.value}</p>
+                <p className="text-[18px] font-bold text-gray-900 tracking-tight leading-none">{stat.value}</p>
               </div>
             ))}
           </div>
@@ -266,6 +269,22 @@ export default function DashboardPage() {
                   ))}
                 </div>
               </div>
+              {/* Kitchen Portal Bridge — admins only */}
+              {["SUPER_ADMIN","ADMIN"].includes(userProfile?.role) && (
+                <Link
+                  to="/kitchen/dashboard"
+                  className="flex items-center gap-3 bg-primary-500 hover:bg-primary-600 text-white rounded-lg p-4 transition-colors shadow-sm"
+                >
+                  <div className="p-2 rounded-md bg-white/20">
+                    <ChefHat size={18} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold leading-tight">Kitchen Portal</p>
+                    <p className="text-xs opacity-80 mt-0.5">Manage ward meal orders</p>
+                  </div>
+                  <ArrowRight size={16} className="opacity-80 flex-shrink-0" />
+                </Link>
+              )}
             </div>
           </div>
         </div>

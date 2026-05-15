@@ -1,11 +1,10 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+﻿import { useEffect, useState, useCallback, useRef } from "react";
 import {
-  collection, query, where, getDocs, orderBy
+  collection, query, where, getDocs
 } from "firebase/firestore";
 import { db } from "../../config/firebase";
 import { format, subDays } from "date-fns";
 import { Download, Printer } from "lucide-react";
-import Layout from "../../components/layout/Layout";
 
 const REPORT_TYPES = [
   { id: "daily", label: "Daily Summary" },
@@ -17,9 +16,8 @@ const REPORT_TYPES = [
 ];
 
 const STATUS_COLORS = {
-  REQUESTED: "bg-orange-100 text-orange-700",
-  PREPARING: "bg-yellow-100 text-yellow-700",
-  SERVED: "bg-green-100 text-green-700",
+  REQUESTED: "bg-amber-100 text-amber-700",
+  PREPARING: "bg-blue-100 text-blue-700",
   DELIVERED: "bg-emerald-100 text-emerald-700",
   CANCELLED: "bg-red-100 text-red-700",
 };
@@ -39,10 +37,13 @@ export default function MealReportsPage() {
         collection(db, "wardMealOrders"),
         where("orderDate", ">=", dateFrom),
         where("orderDate", "<=", dateTo),
-        orderBy("orderDate", "asc"),
-        orderBy("requestedAt", "asc"),
       ));
-      setOrders(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      docs.sort((a, b) => {
+        if (a.orderDate !== b.orderDate) return a.orderDate < b.orderDate ? -1 : 1;
+        return (a.requestedAt?.seconds ?? 0) - (b.requestedAt?.seconds ?? 0);
+      });
+      setOrders(docs);
     } catch (e) {
       console.error(e);
     } finally {
@@ -82,8 +83,7 @@ export default function MealReportsPage() {
   }
 
   return (
-    <Layout>
-      <div className="space-y-6">
+    <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <h1 className="text-xl font-bold text-slate-900">Meal Reports</h1>
@@ -163,7 +163,7 @@ export default function MealReportsPage() {
           )}
         </div>
       </div>
-    </Layout>
+    </div>
   );
 }
 

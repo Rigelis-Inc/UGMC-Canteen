@@ -1,0 +1,33 @@
+export const APP_PATHS = {
+  root: "/",
+  nurseLogin: "/login",
+  adminLogin: "/admin/login",
+  adminHome: "/admin/dashboard",
+  nurseHome: "/nurse/dashboard",
+  kitchenHome: "/kitchen/dashboard",
+  adminStock: {
+    receive: "/admin/stock/receive",
+    issue: "/admin/stock/issue",
+    transfer: "/admin/stock/transfer",
+    adjust: "/admin/stock/adjust",
+    damageExpiry: "/admin/stock/damage-expiry",
+  },
+  nurse: {
+    dashboard: "/nurse/dashboard",
+    patients: "/nurse/patients",
+    orders: "/nurse/orders",
+    history: "/nurse/history",
+  },
+  kitchen: {
+    dashboard: "/kitchen/dashboard",
+    orders: "/kitchen/orders",
+    menus: "/kitchen/menus",
+    patients: "/kitchen/patients",
+    reports: "/kitchen/reports",
+    wards: "/kitchen/wards",
+    wardOrders: "/kitchen/ward-orders",
+    staff: "/kitchen/staff",
+    settings: "/kitchen/settings",
+    menusAdmin: "/kitchen/menus-admin",
+  },
+};

@@ -1,17 +1,50 @@
 @import "tailwindcss";
 
+/* Fix Tailwind v4 preflight resetting button cursors */
+button, [role="button"], select {
+  cursor: pointer;
+}
+
 @theme {
-  --color-primary-50: #fff7ed;
-  --color-primary-100: #ffedd5;
-  --color-primary-200: #fed7aa;
-  --color-primary-300: #fdba74;
-  --color-primary-400: #fb923c;
-  --color-primary-500: #f97316;
-  --color-primary-600: #ea580c;
-  --color-primary-700: #c2410c;
-  --color-primary-800: #9a3412;
-  --color-primary-900: #7c2d12;
-  --color-primary-950: #431407;
+  /* ── Brand: burnt orange ─────────────────────────────────── */
+  --color-primary-50:  #fef6ee;
+  --color-primary-100: #fce9d4;
+  --color-primary-200: #f8cfa8;
+  --color-primary-300: #f4ae72;
+  --color-primary-400: #ee823a;
+  --color-primary-500: #e8611a;
+  --color-primary-600: #d44e0f;
+  --color-primary-700: #b03e10;
+  --color-primary-800: #8c3213;
+  --color-primary-900: #732c14;
+  --color-primary-950: #3d1408;
+
+  /* ── Override Tailwind orange → same burnt orange ────────── */
+  --color-orange-50:  #fef6ee;
+  --color-orange-100: #fce9d4;
+  --color-orange-200: #f8cfa8;
+  --color-orange-300: #f4ae72;
+  --color-orange-400: #ee823a;
+  --color-orange-500: #e8611a;
+  --color-orange-600: #d44e0f;
+  --color-orange-700: #b03e10;
+  --color-orange-800: #8c3213;
+  --color-orange-900: #732c14;
+  --color-orange-950: #3d1408;
+
+  /* ── Override Tailwind amber → warm golden (cohesive, ────── */
+  /* ── distinct from orange, softer than Tailwind default) ─── */
+  --color-amber-50:  #fefbe8;
+  --color-amber-100: #fdf3c0;
+  --color-amber-200: #fbe580;
+  --color-amber-300: #f8ce48;
+  --color-amber-400: #e8aa1a;
+  --color-amber-500: #cc8d0f;
+  --color-amber-600: #a8700c;
+  --color-amber-700: #88580d;
+  --color-amber-800: #714710;
+  --color-amber-900: #5e3b12;
+  --color-amber-950: #341f07;
 
   --color-sidebar: #0f172a;
   --color-sidebar-hover: #1e293b;

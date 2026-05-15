@@ -1,3 +1,5 @@
+import { doc, getDoc } from "firebase/firestore";
+
 export const TRACKING_STEP_ORDER = [
   "PENDING",
   "CONFIRMED",
@@ -97,6 +99,19 @@ function safeLoadStoredOrders() {
 
 export function getCustomerOrderRefs() {
   return safeLoadStoredOrders();
+}
+
+export async function loadCustomerOrderStatuses(db, orderRefs) {
+  if (!orderRefs.length) return [];
+
+  const snaps = await Promise.all(
+    orderRefs.map((ref) => getDoc(doc(db, "publicOrderTracking", ref.id)))
+  );
+
+  return snaps.map((snap, index) => ({
+    id: orderRefs[index].id,
+    status: snap.exists() ? snap.data()?.status : null,
+  }));
 }
 
 export function rememberCustomerOrder(orderRef) {

@@ -1,11 +1,10 @@
-import { useEffect, useState, useCallback } from "react";
+﻿import { useEffect, useState, useCallback } from "react";
 import {
   collection, query, getDocs, addDoc, updateDoc, doc, serverTimestamp, orderBy
 } from "firebase/firestore";
 import { db } from "../../config/firebase";
 import { useAuth } from "../../contexts/AuthContext";
 import { Plus, Pencil, X, Building2, ToggleLeft, ToggleRight } from "lucide-react";
-import Layout from "../../components/layout/Layout";
 
 const WARD_CATEGORIES = [
   "GENERAL","EMERGENCY","ICU","PEDIATRIC","OBGYN","SURGERY","SPECIALTY","PRIVATE"
@@ -83,7 +82,7 @@ export default function WardsPage() {
   }
 
   return (
-    <Layout>
+    <>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -212,6 +211,6 @@ export default function WardsPage() {
           </div>
         </div>
       )}
-    </Layout>
+    </>
   );
 }

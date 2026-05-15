@@ -1,9 +1,19 @@
-import { useState, useEffect } from "react";
-import { collection, getDocs, query, orderBy, limit, where } from "firebase/firestore";
+import { useEffect, useState } from "react";
+import { collection, getDocs, limit, orderBy, query } from "firebase/firestore";
 import { db } from "../../config/firebase";
 import { useAuth } from "../../contexts/AuthContext";
 import { ArrowDownToLine, ArrowUpToLine, BarChart3, Calendar, Filter, X } from "lucide-react";
 import Layout from "../../components/layout/Layout";
+
+const TYPE_OPTIONS = [
+  { value: "", label: "All Types" },
+  { value: "RECEIVE", label: "Receive" },
+  { value: "ISSUE", label: "Issue" },
+  { value: "TRANSFER", label: "Transfer" },
+  { value: "ADJUSTMENT", label: "Adjustment" },
+  { value: "DAMAGE", label: "Damage" },
+  { value: "EXPIRY", label: "Expiry" },
+];
 
 export default function StockMovementsPage() {
   const { userProfile, assignedStores } = useAuth();
@@ -17,22 +27,21 @@ export default function StockMovementsPage() {
 
   useEffect(() => {
     async function fetchData() {
-      const [storesSnap] = await Promise.all([
-        getDocs(collection(db, "stores")),
-      ]);
-      setStores(storesSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
-
       try {
-        let q = query(collection(db, "stockMovements"), orderBy("createdAt", "desc"), limit(500));
-        const snap = await getDocs(q);
-        const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-        setMovements(data);
+        const [storesSnap, movementsSnap] = await Promise.all([
+          getDocs(collection(db, "stores")),
+          getDocs(query(collection(db, "stockMovements"), orderBy("createdAt", "desc"), limit(500))),
+        ]);
+
+        setStores(storesSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
+        setMovements(movementsSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
       } catch (err) {
         console.error("Error fetching movements:", err);
       } finally {
         setLoading(false);
       }
     }
+
     fetchData();
   }, []);
 
@@ -48,10 +57,18 @@ export default function StockMovementsPage() {
     }
     if (dateTo && m.createdAt) {
       const d = m.createdAt.toDate();
-      if (d > new Date(dateTo + "T23:59:59")) return false;
+      if (d > new Date(`${dateTo}T23:59:59`)) return false;
     }
     return true;
   });
+
+  const totalMovements = filtered.length;
+  const totalReceived = filtered.filter((m) => m.type === "RECEIVE").reduce((sum, m) => sum + (m.quantity || 0), 0);
+  const totalIssued = filtered.filter((m) => m.type === "ISSUE").reduce((sum, m) => sum + (m.quantity || 0), 0);
+  const netValue = filtered.reduce((sum, m) => {
+    const value = m.totalCost || 0;
+    return ["ISSUE", "DAMAGE", "EXPIRY"].includes(m.type) ? sum - value : sum + value;
+  }, 0);
 
   const typeConfig = {
     RECEIVE: { bg: "bg-green-100", text: "text-green-700", dot: "bg-green-500", icon: ArrowDownToLine },
@@ -66,38 +83,49 @@ export default function StockMovementsPage() {
 
   return (
     <Layout>
-      <div className="mb-6 animate-fadeIn">
+      <div className="mb-5 animate-fadeIn">
         <h1 className="text-[22px] font-bold text-gray-900 tracking-tight">Stock Movements</h1>
         <p className="text-[13px] text-gray-500 mt-0.5">Complete history of all stock transactions</p>
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-200 mb-6 animate-fadeIn">
-        <div className="p-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4 mb-4 animate-fadeIn">
+        <MetricCard label="Total Movements" value={totalMovements} tone="text-gray-900" />
+        <MetricCard label="Qty Received" value={`+${totalReceived}`} tone="text-emerald-600" />
+        <MetricCard label="Qty Issued" value={`-${totalIssued}`} tone="text-primary-600" />
+        <MetricCard
+          label="Net Value"
+          value={`GH₵ ${Math.abs(netValue).toLocaleString("en-GH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+          tone={netValue >= 0 ? "text-emerald-600" : "text-red-600"}
+        />
+      </div>
+
+      <div className="bg-white rounded-xl border border-gray-200 mb-4 animate-fadeIn">
+        <div className="px-4 py-3.5">
           <div className="flex flex-wrap gap-3 items-end">
-            <div className="flex items-center gap-2 text-gray-400 px-2">
-              <Filter size={16} />
+            <div className="flex items-center gap-2 text-gray-400 px-1.5 pb-1">
+              <Filter size={15} />
             </div>
             <select
               value={filterType}
               onChange={(e) => setFilterType(e.target.value)}
-              className="px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50"
+              className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50"
             >
-              <option value="">All Types</option>
-              <option value="RECEIVE">Receive</option>
-              <option value="ISSUE">Issue</option>
-              <option value="TRANSFER">Transfer</option>
-              <option value="ADJUSTMENT">Adjustment</option>
-              <option value="DAMAGE">Damage</option>
-              <option value="EXPIRY">Expiry</option>
+              {TYPE_OPTIONS.map((opt) => (
+                <option key={opt.value || "ALL"} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
             </select>
             <select
               value={filterStore}
               onChange={(e) => setFilterStore(e.target.value)}
-              className="px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50"
+              className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50"
             >
               <option value="">All Stores</option>
               {stores.map((s) => (
-                <option key={s.id} value={s.id}>{s.name}</option>
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
               ))}
             </select>
             <div className="flex items-center gap-2">
@@ -106,20 +134,25 @@ export default function StockMovementsPage() {
                 type="date"
                 value={dateFrom}
                 onChange={(e) => setDateFrom(e.target.value)}
-                className="px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50"
+                className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50"
               />
               <span className="text-gray-400 text-sm">to</span>
               <input
                 type="date"
                 value={dateTo}
                 onChange={(e) => setDateTo(e.target.value)}
-                className="px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50"
+                className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50"
               />
             </div>
             {hasActiveFilters && (
               <button
-                onClick={() => { setFilterType(""); setFilterStore(""); setDateFrom(""); setDateTo(""); }}
-                className="flex items-center gap-1.5 px-3 py-2.5 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                onClick={() => {
+                  setFilterType("");
+                  setFilterStore("");
+                  setDateFrom("");
+                  setDateTo("");
+                }}
+                className="flex items-center gap-1.5 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
               >
                 <X size={14} />
                 Clear
@@ -143,20 +176,20 @@ export default function StockMovementsPage() {
           </div>
         ) : (
           <>
-            <div className="px-6 py-3 bg-gray-50/80 border-b border-gray-200 text-xs text-gray-500">
+            <div className="px-5 py-3 bg-gray-50/80 border-b border-gray-200 text-[11px] text-gray-500">
               Showing {filtered.length} of {movements.length} movements
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-gray-50/80 border-b border-gray-200">
                   <tr>
-                    <th className="text-left px-6 py-3.5 font-medium text-gray-500 text-xs uppercase tracking-wider">Date</th>
-                    <th className="text-left px-6 py-3.5 font-medium text-gray-500 text-xs uppercase tracking-wider">Type</th>
-                    <th className="text-left px-6 py-3.5 font-medium text-gray-500 text-xs uppercase tracking-wider">Store</th>
-                    <th className="text-left px-6 py-3.5 font-medium text-gray-500 text-xs uppercase tracking-wider">Product</th>
-                    <th className="text-right px-6 py-3.5 font-medium text-gray-500 text-xs uppercase tracking-wider">Qty</th>
-                    <th className="text-left px-6 py-3.5 font-medium text-gray-500 text-xs uppercase tracking-wider">Ref</th>
-                    <th className="text-left px-6 py-3.5 font-medium text-gray-500 text-xs uppercase tracking-wider">By</th>
+                    <th className="text-left px-5 py-3 font-medium text-gray-500 text-[10px] uppercase tracking-[0.18em]">Date</th>
+                    <th className="text-left px-5 py-3 font-medium text-gray-500 text-[10px] uppercase tracking-[0.18em]">Type</th>
+                    <th className="text-left px-5 py-3 font-medium text-gray-500 text-[10px] uppercase tracking-[0.18em]">Store</th>
+                    <th className="text-left px-5 py-3 font-medium text-gray-500 text-[10px] uppercase tracking-[0.18em]">Product</th>
+                    <th className="text-right px-5 py-3 font-medium text-gray-500 text-[10px] uppercase tracking-[0.18em]">Qty</th>
+                    <th className="text-left px-5 py-3 font-medium text-gray-500 text-[10px] uppercase tracking-[0.18em]">Ref</th>
+                    <th className="text-left px-5 py-3 font-medium text-gray-500 text-[10px] uppercase tracking-[0.18em]">By</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -165,22 +198,23 @@ export default function StockMovementsPage() {
                     const isNegative = ["ISSUE", "DAMAGE", "EXPIRY"].includes(m.type);
                     return (
                       <tr key={m.id} className="hover:bg-gray-50/50 transition-colors">
-                        <td className="px-6 py-4 text-gray-500">
+                        <td className="px-5 py-4 text-gray-500 whitespace-nowrap">
                           {m.createdAt?.toDate?.()?.toLocaleDateString() || "N/A"}
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-5 py-4">
                           <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full ${config.bg} ${config.text}`}>
-                            <span className={`w-1.5 h-1.5 rounded-full ${config.dot}`}></span>
+                            <span className={`w-1.5 h-1.5 rounded-full ${config.dot}`} />
                             {m.type}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-gray-500">{m.storeName}</td>
-                        <td className="px-6 py-4 font-medium text-gray-900">{m.productName}</td>
-                        <td className={`px-6 py-4 text-right font-semibold ${isNegative ? "text-red-600" : "text-green-600"}`}>
-                          {isNegative ? "-" : "+"}{m.quantity} {m.unit}
+                        <td className="px-5 py-4 text-gray-500">{m.storeName}</td>
+                        <td className="px-5 py-4 font-medium text-gray-900">{m.productName}</td>
+                        <td className={`px-5 py-4 text-right font-semibold ${isNegative ? "text-red-600" : "text-green-600"}`}>
+                          {isNegative ? "-" : "+"}
+                          {m.quantity} <span className="text-gray-400 font-medium">{m.unit}</span>
                         </td>
-                        <td className="px-6 py-4 text-gray-500 font-mono text-xs">{m.referenceNumber || "—"}</td>
-                        <td className="px-6 py-4 text-gray-500">{m.performedByName}</td>
+                        <td className="px-5 py-4 text-gray-500 font-mono text-[11px]">{m.referenceNumber || "—"}</td>
+                        <td className="px-5 py-4 text-gray-500">{m.performedByName}</td>
                       </tr>
                     );
                   })}
@@ -194,3 +228,11 @@ export default function StockMovementsPage() {
   );
 }
 
+function MetricCard({ label, value, tone }) {
+  return (
+    <div className="rounded-lg border border-gray-200 bg-white px-4 py-3">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-gray-400">{label}</p>
+      <p className={`mt-1 text-[22px] font-semibold leading-none ${tone}`}>{value}</p>
+    </div>
+  );
+}

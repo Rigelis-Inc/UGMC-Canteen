@@ -1,9 +1,7 @@
-import { lazy, Suspense, useState, useEffect } from "react";
+import { lazy, Suspense } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
-import { collection, query, where, onSnapshot } from "firebase/firestore";
-import { db } from "./config/firebase";
 import ProtectedRoute from "./components/common/ProtectedRoute";
-import { KitchenBadgeContext } from "./contexts/KitchenBadgeContext";
+import { APP_PATHS } from "./lib/routes";
 
 const DashboardPage = lazy(() => import("./pages/dashboard/DashboardPage"));
 const StoresPage = lazy(() => import("./pages/stores/StoresPage"));
@@ -21,12 +19,6 @@ const ReportsPage = lazy(() => import("./pages/reports/ReportsPage"));
 const AuditLogsPage = lazy(() => import("./pages/audit-logs/AuditLogsPage"));
 const UsersPage = lazy(() => import("./pages/users/UsersPage"));
 const SettingsPage = lazy(() => import("./pages/settings/SettingsPage"));
-const WardsPage = lazy(() => import("./pages/admin-meal/WardsPage"));
-const MealMenusPage = lazy(() => import("./pages/admin-meal/MealMenusPage"));
-const KitchenDashboardPage = lazy(() => import("./pages/admin-meal/KitchenDashboardPage"));
-const MealOrdersPage = lazy(() => import("./pages/admin-meal/MealOrdersPage"));
-const MealReportsPage = lazy(() => import("./pages/admin-meal/MealReportsPage"));
-const MealSettingsPage = lazy(() => import("./pages/admin-meal/MealSettingsPage"));
 
 function ShellLoader() {
   return (
@@ -40,16 +32,7 @@ function ShellLoader() {
 }
 
 export default function AppShell() {
-  const [pendingOrders, setPendingOrders] = useState(0);
-
-  useEffect(() => {
-    const q = query(collection(db, "wardMealOrders"), where("status", "==", "REQUESTED"));
-    const unsub = onSnapshot(q, (snap) => setPendingOrders(snap.size), () => setPendingOrders(0));
-    return () => unsub();
-  }, []);
-
   return (
-    <KitchenBadgeContext.Provider value={pendingOrders}>
     <Suspense fallback={<ShellLoader />}>
       <Routes>
         {/* Inventory */}
@@ -85,46 +68,11 @@ export default function AppShell() {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="stock/receive"
-          element={
-            <ProtectedRoute requiredPermission="receiveStock">
-              <ReceiveStockPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="stock/issue"
-          element={
-            <ProtectedRoute requiredPermission="issueStock">
-              <IssueStockPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="stock/transfer"
-          element={
-            <ProtectedRoute requiredPermission="transferStock">
-              <TransferStockPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="stock/adjust"
-          element={
-            <ProtectedRoute requiredPermission="adjustStock">
-              <AdjustStockPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="stock/damage-expiry"
-          element={
-            <ProtectedRoute requiredPermission="adjustStock">
-              <DamageExpiryPage />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="stock/receive" element={<ProtectedRoute requiredPermission="receiveStock"><ReceiveStockPage /></ProtectedRoute>} />
+        <Route path="stock/issue" element={<ProtectedRoute requiredPermission="issueStock"><IssueStockPage /></ProtectedRoute>} />
+        <Route path="stock/transfer" element={<ProtectedRoute requiredPermission="transferStock"><TransferStockPage /></ProtectedRoute>} />
+        <Route path="stock/adjust" element={<ProtectedRoute requiredPermission="adjustStock"><AdjustStockPage /></ProtectedRoute>} />
+        <Route path="stock/damage-expiry" element={<ProtectedRoute requiredPermission="adjustStock"><DamageExpiryPage /></ProtectedRoute>} />
         <Route
           path="stock-movements"
           element={
@@ -183,67 +131,18 @@ export default function AppShell() {
             </ProtectedRoute>
           }
         />
-        {/* Meal Ordering */}
-        <Route
-          path="wards"
-          element={
-            <ProtectedRoute requiredPermission="manageWards">
-              <WardsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="meal-menus"
-          element={
-            <ProtectedRoute requiredPermission="manageMealMenus">
-              <MealMenusPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="kitchen"
-          element={
-            <ProtectedRoute requiredPermission="viewKitchenDashboard">
-              <KitchenDashboardPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="meal-orders"
-          element={
-            <ProtectedRoute requiredPermission="manageMealOrders">
-              <MealOrdersPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="meal-reports"
-          element={
-            <ProtectedRoute requiredPermission="viewMealReports">
-              <MealReportsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="meal-settings"
-          element={
-            <ProtectedRoute requiredPermission="manageMealSettings">
-              <MealSettingsPage />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="meal-staff" element={<Navigate to={APP_PATHS.kitchen.staff} replace />} />
+        <Route path="meal-settings" element={<Navigate to={APP_PATHS.kitchen.settings} replace />} />
 
-        {/* Legacy path redirects */}
-        <Route path="receive-stock" element={<Navigate to="/admin/stock/receive" replace />} />
-        <Route path="issue-stock" element={<Navigate to="/admin/stock/issue" replace />} />
-        <Route path="transfer-stock" element={<Navigate to="/admin/stock/transfer" replace />} />
-        <Route path="adjust-stock" element={<Navigate to="/admin/stock/adjust" replace />} />
-        <Route path="damage-expiry" element={<Navigate to="/admin/stock/damage-expiry" replace />} />
+        <Route path="receive-stock" element={<Navigate to={APP_PATHS.adminStock.receive} replace />} />
+        <Route path="issue-stock" element={<Navigate to={APP_PATHS.adminStock.issue} replace />} />
+        <Route path="transfer-stock" element={<Navigate to={APP_PATHS.adminStock.transfer} replace />} />
+        <Route path="adjust-stock" element={<Navigate to={APP_PATHS.adminStock.adjust} replace />} />
+        <Route path="damage-expiry" element={<Navigate to={APP_PATHS.adminStock.damageExpiry} replace />} />
 
-        <Route index element={<Navigate to="/admin/dashboard" replace />} />
-        <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
+        <Route index element={<Navigate to={APP_PATHS.adminHome} replace />} />
+        <Route path="*" element={<Navigate to={APP_PATHS.adminHome} replace />} />
       </Routes>
     </Suspense>
-    </KitchenBadgeContext.Provider>
   );
 }

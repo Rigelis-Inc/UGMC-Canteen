@@ -183,42 +183,22 @@ export default function StoreDetailPage() {
         <p className="text-[13px] text-gray-500">{store.description || store.code}</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6 animate-fadeIn">
-        <div className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-sm hover:border-gray-300 transition-all duration-200">
-          <div className="flex items-start justify-between mb-2">
-            <p className="text-xs font-medium text-gray-500">Total Products</p>
-            <div className="p-1.5 rounded-md bg-primary-50">
-              <Package size={14} className="text-primary-600" />
-            </div>
-          </div>
-          <p className="text-xl font-bold text-gray-900 tracking-tight leading-none">{products.length}</p>
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-2.5 mb-4 animate-fadeIn">
+        <div className="bg-white rounded-lg border border-gray-200 p-3">
+          <p className="text-[11px] uppercase tracking-wide text-gray-500">Total Products</p>
+          <p className="mt-1 text-base font-semibold text-gray-900">{products.length}</p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-sm hover:border-gray-300 transition-all duration-200">
-          <div className="flex items-start justify-between mb-2">
-            <p className="text-xs font-medium text-gray-500">Low Stock</p>
-            <div className="p-1.5 rounded-md bg-amber-50">
-              <TrendingDown size={14} className="text-amber-600" />
-            </div>
-          </div>
-          <p className="text-xl font-bold text-amber-600 tracking-tight leading-none">{lowStockCount}</p>
+        <div className="bg-white rounded-lg border border-gray-200 p-3">
+          <p className="text-[11px] uppercase tracking-wide text-gray-500">Low Stock</p>
+          <p className="mt-1 text-base font-semibold text-amber-600">{lowStockCount}</p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-sm hover:border-gray-300 transition-all duration-200">
-          <div className="flex items-start justify-between mb-2">
-            <p className="text-xs font-medium text-gray-500">Out of Stock</p>
-            <div className="p-1.5 rounded-md bg-red-50">
-              <AlertTriangle size={14} className="text-red-600" />
-            </div>
-          </div>
-          <p className="text-xl font-bold text-red-600 tracking-tight leading-none">{outOfStockCount}</p>
+        <div className="bg-white rounded-lg border border-gray-200 p-3">
+          <p className="text-[11px] uppercase tracking-wide text-gray-500">Out of Stock</p>
+          <p className="mt-1 text-base font-semibold text-red-600">{outOfStockCount}</p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-sm hover:border-gray-300 transition-all duration-200">
-          <div className="flex items-start justify-between mb-2">
-            <p className="text-xs font-medium text-gray-500">Stock Value</p>
-            <div className="p-1.5 rounded-md bg-emerald-50">
-              <DollarSign size={14} className="text-emerald-600" />
-            </div>
-          </div>
-          <p className="text-xl font-bold text-emerald-600 tracking-tight leading-none">GH₵ {totalValue.toLocaleString("en-GH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+        <div className="bg-white rounded-lg border border-gray-200 p-3">
+          <p className="text-[11px] uppercase tracking-wide text-gray-500">Stock Value</p>
+          <p className="mt-1 text-base font-semibold text-emerald-600">GH₵ {totalValue.toLocaleString("en-GH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
         </div>
       </div>
 
@@ -379,27 +359,27 @@ export default function StoreDetailPage() {
               </div>
             ) : (
               <>
-                <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-slate-50 to-primary-50/50">
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                    <div>
-                      <p className="text-xs text-gray-500">Total Movements</p>
-                      <p className="text-lg font-bold text-gray-900">{recentMovements.length}</p>
+                <div className="px-4 py-3 border-b border-gray-100 bg-white">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                    <div className="rounded-md border border-gray-200 px-3 py-2">
+                      <p className="text-[11px] uppercase tracking-wide text-gray-500">Total Movements</p>
+                      <p className="mt-1 text-sm font-semibold text-gray-900">{recentMovements.length}</p>
                     </div>
-                    <div>
-                      <p className="text-xs text-gray-500">Qty Received</p>
-                      <p className="text-lg font-bold text-green-600">
+                    <div className="rounded-md border border-gray-200 px-3 py-2">
+                      <p className="text-[11px] uppercase tracking-wide text-gray-500">Qty Received</p>
+                      <p className="mt-1 text-sm font-semibold text-green-600">
                         +{recentMovements.filter((m) => m.type === "RECEIVE").reduce((s, m) => s + (m.quantity || 0), 0)}
                       </p>
                     </div>
-                    <div>
-                      <p className="text-xs text-gray-500">Qty Issued</p>
-                      <p className="text-lg font-bold text-primary-600">
+                    <div className="rounded-md border border-gray-200 px-3 py-2">
+                      <p className="text-[11px] uppercase tracking-wide text-gray-500">Qty Issued</p>
+                      <p className="mt-1 text-sm font-semibold text-primary-600">
                         -{recentMovements.filter((m) => m.type === "ISSUE").reduce((s, m) => s + (m.quantity || 0), 0)}
                       </p>
                     </div>
-                    <div>
-                      <p className="text-xs text-gray-500">Net Value</p>
-                      <p className={`text-lg font-bold ${
+                    <div className="rounded-md border border-gray-200 px-3 py-2">
+                      <p className="text-[11px] uppercase tracking-wide text-gray-500">Net Value</p>
+                      <p className={`mt-1 text-sm font-semibold ${
                         recentMovements.filter((m) => m.type === "RECEIVE").reduce((s, m) => s + (m.totalCost || 0), 0) -
                         recentMovements.filter((m) => m.type === "ISSUE").reduce((s, m) => s + (m.totalCost || 0), 0) >= 0
                           ? "text-emerald-600" : "text-red-600"
@@ -910,7 +890,7 @@ function UploadProductsModal({ store, categories, onClose }) {
     const ws = XLSX.utils.json_to_sheet(template);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Products");
-    XLSX.writeFile(wb, "UGMC_Product_Upload_Template.xlsx");
+    XLSX.writeFile(wb, "Mayrit_Product_Upload_Template.xlsx");
   }
 
   return (

@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { hasPermission } from "../../lib/permissions";
-import { useKitchenBadge } from "../../contexts/KitchenBadgeContext";
+import { APP_PATHS } from "../../lib/routes";
 import {
   LayoutDashboard,
   Warehouse,
@@ -16,7 +16,7 @@ import {
   BarChart3,
   ShieldCheck,
   Settings,
-  Globe,
+  ChefHat,
   LogOut,
   Menu,
   X,
@@ -25,16 +25,10 @@ import {
   Activity,
   ChevronDown,
   ChevronRight,
-  UtensilsCrossed,
-  ClipboardList,
-  ChefHat,
-  FileBarChart,
   SlidersHorizontal,
-  Building2,
-  BookOpen,
 } from "lucide-react";
 
-const DASHBOARD_PATH = "/admin/dashboard";
+const DASHBOARD_PATH = APP_PATHS.adminHome;
 
 const navGroups = [
   {
@@ -44,11 +38,11 @@ const navGroups = [
     items: [
       { label: "Stores", icon: Warehouse, path: "/admin/stores", permission: "viewDashboard" },
       { label: "Products", icon: Package, path: "/admin/products", permission: "manageProducts" },
-      { label: "Receive Stock", icon: ArrowDownToLine, path: "/admin/stock/receive", permission: "receiveStock" },
-      { label: "Issue Stock", icon: ArrowUpToLine, path: "/admin/stock/issue", permission: "issueStock" },
-      { label: "Transfer Stock", icon: ArrowUpDown, path: "/admin/stock/transfer", permission: "transferStock" },
-      { label: "Adjust Stock", icon: SlidersHorizontal, path: "/admin/stock/adjust", permission: "adjustStock" },
-      { label: "Damage / Expiry", icon: TriangleAlert, path: "/admin/stock/damage-expiry", permission: "adjustStock" },
+      { label: "Receive Stock", icon: ArrowDownToLine, path: APP_PATHS.adminStock.receive, permission: "receiveStock" },
+      { label: "Issue Stock", icon: ArrowUpToLine, path: APP_PATHS.adminStock.issue, permission: "issueStock" },
+      { label: "Transfer Stock", icon: ArrowUpDown, path: APP_PATHS.adminStock.transfer, permission: "transferStock" },
+      { label: "Adjust Stock", icon: SlidersHorizontal, path: APP_PATHS.adminStock.adjust, permission: "adjustStock" },
+      { label: "Damage / Expiry", icon: TriangleAlert, path: APP_PATHS.adminStock.damageExpiry, permission: "adjustStock" },
       { label: "Movements", icon: Activity, path: "/admin/stock-movements", permission: "viewReports" },
     ],
   },
@@ -72,22 +66,9 @@ const navGroups = [
       { label: "Settings", icon: Settings, path: "/admin/settings", permission: "manageSettings" },
     ],
   },
-  {
-    id: "meal-ordering",
-    label: "Meal Ordering",
-    icon: UtensilsCrossed,
-    items: [
-      { label: "Wards", icon: Building2, path: "/admin/wards", permission: "manageWards" },
-      { label: "Meal Menus", icon: BookOpen, path: "/admin/meal-menus", permission: "manageMealMenus" },
-      { label: "Kitchen", icon: ChefHat, path: "/admin/kitchen", permission: "viewKitchenDashboard" },
-      { label: "Meal Orders", icon: ClipboardList, path: "/admin/meal-orders", permission: "manageMealOrders" },
-      { label: "Meal Reports", icon: FileBarChart, path: "/admin/meal-reports", permission: "viewMealReports" },
-      { label: "Meal Settings", icon: SlidersHorizontal, path: "/admin/meal-settings", permission: "manageMealSettings" },
-    ],
-  },
 ];
 
-function NavGroup({ group, collapsed, isOpen, onToggle, location, onNav, badge }) {
+function NavGroup({ group, collapsed, isOpen, onToggle, location, onNav }) {
   const hasActive = group.items.some(
     (item) =>
       location.pathname === item.path ||
@@ -117,11 +98,6 @@ function NavGroup({ group, collapsed, isOpen, onToggle, location, onNav, badge }
                 <span className="absolute inset-0 bg-gradient-to-r from-primary-600 to-primary-500 rounded-lg shadow-lg shadow-primary-600/20" />
               )}
               <item.icon size={16} className="relative flex-shrink-0" />
-              {badge > 0 && item.path === "/admin/kitchen" && (
-                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] flex items-center justify-center rounded-full text-[9px] font-bold bg-amber-500 text-white px-0.5 border-2 border-slate-900">
-                  {badge > 9 ? "9+" : badge}
-                </span>
-              )}
             </Link>
           );
         })}
@@ -154,7 +130,7 @@ function NavGroup({ group, collapsed, isOpen, onToggle, location, onNav, badge }
           {group.items.map((item) => {
             const isActive =
               location.pathname === item.path ||
-              (item.path !== "/dashboard" && location.pathname.startsWith(item.path + "/"));
+              (item.path !== DASHBOARD_PATH && location.pathname.startsWith(item.path + "/"));
             return (
               <Link
                 key={item.path}
@@ -174,11 +150,6 @@ function NavGroup({ group, collapsed, isOpen, onToggle, location, onNav, badge }
                 )}
                 <item.icon size={14} className="relative flex-shrink-0 opacity-70" />
                 <span className="relative truncate">{item.label}</span>
-                {badge > 0 && item.path === "/admin/kitchen" && (
-                  <span className="relative ml-auto min-w-[18px] h-[18px] flex items-center justify-center rounded-full text-[10px] font-bold bg-amber-500 text-white px-1">
-                    {badge > 9 ? "9+" : badge}
-                  </span>
-                )}
               </Link>
             );
           })}
@@ -192,7 +163,6 @@ export default function Sidebar({ collapsed, onToggle }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [openGroup, setOpenGroup] = useState("inventory");
-  const pendingOrders = useKitchenBadge();
   const location = useLocation();
   const navigate = useNavigate();
   const { userProfile, logout } = useAuth();
@@ -343,31 +313,30 @@ export default function Sidebar({ collapsed, onToggle }) {
                 onToggle={() => handleToggle(group.id)}
                 location={location}
                 onNav={handleNav}
-                badge={pendingOrders}
               />
             ))}
           </div>
 
           {/* User */}
           <div className="flex-shrink-0 border-t border-slate-800/50 p-3 space-y-2">
-            {/* Visit Website */}
+            {/* Kitchen Portal */}
             {collapsed ? (
               <div className="flex justify-center mb-1">
                 <Link
-                  to="/"
-                  title="Visit Website"
+                  to="/kitchen/dashboard"
+                  title="Kitchen Portal"
                   className="p-2 rounded-lg bg-primary-500/20 text-primary-400 hover:bg-primary-500/30 transition-all"
                 >
-                  <Globe size={16} />
+                  <ChefHat size={16} />
                 </Link>
               </div>
             ) : (
               <Link
-                to="/"
+                to="/kitchen/dashboard"
                 className="flex items-center gap-2.5 w-full px-3 py-2.5 rounded-xl text-[13px] font-semibold bg-primary-500/20 text-primary-300 hover:bg-primary-500/30 border border-primary-500/30 transition-all shadow-sm"
               >
-                <Globe size={15} className="flex-shrink-0" />
-                <span className="flex-1">Visit Website</span>
+                <ChefHat size={15} className="flex-shrink-0" />
+                <span className="flex-1">Kitchen Portal</span>
                 <span className="text-[10px] font-medium bg-primary-500/30 text-primary-300 px-1.5 py-0.5 rounded-md">↗</span>
               </Link>
             )}

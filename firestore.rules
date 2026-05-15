@@ -51,6 +51,14 @@ service cloud.firestore {
       return isAdmin() || userRole() in ["SUPERVISOR", "AUDITOR"];
     }
 
+    function canViewOrders() {
+      return userRole() in ["SUPER_ADMIN", "ADMIN", "STORE_MANAGER", "STORE_OFFICER", "SUPERVISOR", "AUDITOR"];
+    }
+
+    function canManageOrders() {
+      return userRole() in ["SUPER_ADMIN", "ADMIN", "STORE_MANAGER", "STORE_OFFICER", "SUPERVISOR"];
+    }
+
     function hasStoreAccess(storeId) {
       return isAdmin() || assignedStores().size() == 0 || (storeId is string && storeId in assignedStores());
     }
@@ -125,13 +133,65 @@ service cloud.firestore {
       return userRole() in ["SUPER_ADMIN", "ADMIN"];
     }
 
+    function validMenuItemData() {
+      return request.resource.data.name is string
+        && request.resource.data.price is number
+        && request.resource.data.isActive is bool;
+    }
+
+    function validFoodOrderData() {
+      return request.resource.data.customerName is string
+        && request.resource.data.phone is string
+        && request.resource.data.deliveryLocation is string
+        && request.resource.data.items is list
+        && request.resource.data.status == "PENDING"
+        && request.resource.data.paymentStatus == "PENDING";
+    }
+
+    function validPublicTrackingData() {
+      return request.resource.data.orderId is string
+        && request.resource.data.orderNumber is string
+        && request.resource.data.customerName is string
+        && request.resource.data.status is string
+        && request.resource.data.items is list;
+    }
+
     match /settings/{settingId} {
       allow read: if settingId == "orderSettings" || settingId == "vipMenu"
         || (signedIn() && isAdmin())
         || (signedIn() && settingId == "mealOrdering" && isMealRole());
-      allow create: if signedIn() && isAdmin() && hasCreateTimestamps();
-      allow update: if signedIn() && isAdmin() && hasUpdateTimestamp();
+      allow write: if signedIn() && isAdmin();
+    }
+
+    match /menuItems/{itemId} {
+      allow read: if resource.data.isActive == true || (signedIn() && canManageMenu());
+      allow create: if signedIn() && canManageMenu() && validMenuItemData();
+      allow update: if signedIn() && canManageMenu() && validMenuItemData();
+      allow delete: if signedIn() && canManageMenu();
+    }
+
+    match /foodOrders/{orderId} {
+      allow read: if signedIn() && canViewOrders();
+      allow create: if validFoodOrderData();
+      allow update: if signedIn() && canManageOrders();
       allow delete: if signedIn() && isAdmin();
+    }
+
+    match /publicOrderTracking/{trackingId} {
+      allow read: if true;
+      allow create: if validPublicTrackingData();
+      allow update: if signedIn() && canManageOrders();
+      allow delete: if signedIn() && canManageOrders();
+    }
+
+    match /orderStatusLogs/{logId} {
+      allow read: if signedIn() && canViewOrders();
+      allow create: if signedIn() && canManageOrders()
+        && request.resource.data.orderId is string
+        && request.resource.data.previousStatus is string
+        && request.resource.data.newStatus is string
+        && request.resource.data.createdAt == request.time;
+      allow update, delete: if false;
     }
 
     // ── Meal Ordering ─────────────────────────────────────────────────────────
@@ -146,10 +206,23 @@ service cloud.firestore {
     match /patients/{patientId} {
       allow read: if signedIn() && isMealRole();
       allow create: if signedIn() && isMealRole()
-        && request.resource.data.name is string
-        && request.resource.data.wardId is string;
+        && request.resource.data.patientName is string
+        && request.resource.data.wardId is string
+        && request.resource.data.bedNumber is string
+        && request.resource.data.patientClass is string
+        && request.resource.data.isSpecialPatient is bool
+        && request.resource.data.specialMealType is string
+        && request.resource.data.specialInstructions is string
+        && request.resource.data.status is string;
       allow update: if signedIn() && isMealRole()
-        && request.resource.data.wardId is string;
+        && request.resource.data.patientName is string
+        && request.resource.data.wardId is string
+        && request.resource.data.bedNumber is string
+        && request.resource.data.patientClass is string
+        && request.resource.data.isSpecialPatient is bool
+        && request.resource.data.specialMealType is string
+        && request.resource.data.specialInstructions is string
+        && request.resource.data.status is string;
       allow delete: if signedIn() && isAdmin();
     }
 
