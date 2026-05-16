@@ -1,9 +1,10 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import {
-  collection, query, orderBy, updateDoc, doc, serverTimestamp, addDoc, setDoc, onSnapshot,
+  collection, getDocs, updateDoc, doc, serverTimestamp, addDoc, setDoc,
 } from "firebase/firestore";
 import { db } from "../../config/firebase";
 import { useAuth } from "../../contexts/AuthContext";
+import { writeAuditLog } from "../../lib/audit";
 import Layout from "../../components/layout/Layout";
 import { useNavigate } from "react-router-dom";
 import {
@@ -38,7 +39,7 @@ const NEXT_STATUS = {
 };
 
 export default function OrdersPage() {
-  const { userProfile } = useAuth();
+  const { userProfile, currentUser } = useAuth();
   const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -50,18 +51,36 @@ export default function OrdersPage() {
   const [filterDateTo, setFilterDateTo] = useState("");
   const [updatingId, setUpdatingId] = useState(null);
 
-  useEffect(() => {
-    const q = query(collection(db, "foodOrders"), orderBy("createdAt", "desc"));
-    const unsub = onSnapshot(q, (snap) => {
-      setOrders(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+  const fetchOrders = useCallback(async () => {
+    try {
+      const snap = await getDocs(collection(db, "foodOrders"));
+      const docs = snap.docs
+        .map((d) => ({ id: d.id, ...d.data() }))
+        .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+      setOrders(docs);
+      setError(null);
+    } catch (err) {
+      console.error("Orders fetch error:", err);
+      setError("Failed to load orders.");
+    } finally {
       setLoading(false);
-    }, (err) => {
-      console.error("Orders listener error:", err);
-      setError("Failed to listen to orders.");
-      setLoading(false);
-    });
-    return () => unsub();
+    }
   }, []);
+
+  useEffect(() => {
+    let active = true;
+    const run = async () => {
+      if (!active) return;
+      await fetchOrders();
+    };
+
+    run();
+    const intervalId = setInterval(run, 30000);
+    return () => {
+      active = false;
+      clearInterval(intervalId);
+    };
+  }, [fetchOrders]);
 
   async function advanceStatus(order, e) {
     e.stopPropagation();
@@ -109,9 +128,24 @@ export default function OrdersPage() {
         note: "",
         createdAt: now,
       });
+      await writeAuditLog(db, {
+        action: "Food order status changed",
+        entityType: "foodOrder",
+        entityId: order.id,
+        description: `Changed ${order.orderNumber} from ${order.status} to ${next}`,
+        metadata: {
+          orderId: order.id,
+          orderNumber: order.orderNumber || "",
+          previousStatus: order.status,
+          newStatus: next,
+        },
+        currentUser,
+        userProfile,
+      });
       setOrders((prev) => prev.map((o) => o.id === order.id ? { ...o, status: next } : o));
       setSuccessMsg(`Order ${order.orderNumber} → ${STATUS_LABELS[next]}`);
       setTimeout(() => setSuccessMsg(null), 3000);
+      fetchOrders();
     } catch {
       setError("Failed to update order status.");
     } finally {
@@ -155,9 +189,24 @@ export default function OrdersPage() {
         note: "Cancelled by admin",
         createdAt: now,
       });
+      await writeAuditLog(db, {
+        action: "Food order cancelled",
+        entityType: "foodOrder",
+        entityId: order.id,
+        description: `Cancelled ${order.orderNumber}`,
+        metadata: {
+          orderId: order.id,
+          orderNumber: order.orderNumber || "",
+          previousStatus: order.status,
+          newStatus: "CANCELLED",
+        },
+        currentUser,
+        userProfile,
+      });
       setOrders((prev) => prev.map((o) => o.id === order.id ? { ...o, status: "CANCELLED" } : o));
       setSuccessMsg("Order cancelled.");
       setTimeout(() => setSuccessMsg(null), 3000);
+      fetchOrders();
     } catch {
       setError("Failed to cancel order.");
     } finally {
@@ -266,12 +315,12 @@ export default function OrdersPage() {
         </div>
 
         {/* Status pills */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-3 mb-2">
+        <div className="flex flex-wrap items-center gap-2 mb-2">
           {STATUSES.map((s) => (
             <button
               key={s}
               onClick={(e) => { e.stopPropagation(); setFilterStatus(s); }}
-              className={`flex-shrink-0 px-3.5 py-2 rounded-xl text-xs font-semibold transition-colors ${
+              className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-colors ${
                 filterStatus === s ? "bg-orange-500 text-white" : "bg-white border border-gray-200 text-gray-600 hover:border-gray-300"
               }`}
             >

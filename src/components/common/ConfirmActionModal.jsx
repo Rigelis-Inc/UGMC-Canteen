@@ -8,6 +8,7 @@ export default function ConfirmActionModal({
   confirmLabel = "Confirm",
   cancelLabel = "Cancel",
   tone = "warning",
+  icon: Icon = AlertTriangle,
   loading = false,
   onConfirm,
   onCancel,
@@ -32,6 +33,8 @@ export default function ConfirmActionModal({
       ? "bg-red-600 hover:bg-red-700 focus:ring-red-500/30"
       : tone === "success"
       ? "bg-green-600 hover:bg-green-700 focus:ring-green-500/30"
+      : tone === "brand"
+      ? "bg-primary-600 hover:bg-primary-700 focus:ring-primary-500/30"
       : "bg-amber-600 hover:bg-amber-700 focus:ring-amber-500/30";
 
   const iconWrapStyles =
@@ -39,6 +42,8 @@ export default function ConfirmActionModal({
       ? "bg-red-50 text-red-600"
       : tone === "success"
       ? "bg-green-50 text-green-600"
+      : tone === "brand"
+      ? "bg-primary-50 text-primary-600"
       : "bg-amber-50 text-amber-600";
 
   return (
@@ -52,7 +57,7 @@ export default function ConfirmActionModal({
         <div className="flex items-start justify-between gap-4 border-b border-gray-100 px-6 py-5">
           <div className="flex items-start gap-3">
             <div className={`mt-0.5 flex h-10 w-10 items-center justify-center rounded-xl ${iconWrapStyles}`}>
-              <AlertTriangle size={18} />
+              <Icon size={18} />
             </div>
             <div>
               <h2 className="text-lg font-semibold text-gray-900">{title}</h2>

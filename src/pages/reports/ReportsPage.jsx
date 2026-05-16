@@ -4,6 +4,7 @@ import { db } from "../../config/firebase";
 import { Download, FileText, Loader2, BarChart3, Calendar, Filter, X, ArrowUpToLine, ArrowDownToLine, TrendingUp, DollarSign } from "lucide-react";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import Layout from "../../components/layout/Layout";
 
 const REPORT_TYPES = [
@@ -135,63 +136,213 @@ export default function ReportsPage() {
     return stores.find((s) => s.id === storeId)?.name || storeId || "—";
   }
 
-  function exportExcel() {
-    if (data.length === 0) return;
-    const isMovement = data[0]?.type;
-    let rows;
-    if (isMovement) {
-      rows = data.map((m) => ({
-        Date: formatDate(m.createdAt),
-        Type: m.type,
-        Store: getStoreName(m.storeId),
-        Product: m.productName,
-        Quantity: m.quantity,
-        Unit: m.unit,
-        "Unit Cost (GH₵)": m.unitCost?.toFixed(2) || "0.00",
-        "Total Cost (GH₵)": (m.totalCost || 0).toFixed(2),
-        Reference: m.referenceNumber || "—",
-        Recipient: m.recipientName || "—",
-        Supplier: m.supplierName || "—",
-        "From Store": m.fromStoreName || "—",
-        "To Store": m.toStoreName || "—",
-        "Performed By": m.performedByName || "—",
-        "Approved By": m.approvedByName || "—",
-        Note: m.note || "—",
-        Status: m.status || "—",
-      }));
-    } else {
-      rows = data.map((p) => ({
-        Product: p.productName,
-        Store: getStoreName(p.storeId),
-        Category: p.categoryId || "—",
-        Quantity: p.quantityOnHand,
-        Unit: p.unit,
-        "Unit Cost (GH₵)": (p.unitCost || 0).toFixed(2),
-        "Total Value (GH₵)": (p.totalValue || 0).toFixed(2),
-        "Reorder Level": p.reorderLevel || "—",
-        "Batch Number": p.batchNumber || "—",
-        "Expiry Date": p.expiryDate ? formatDate(p.expiryDate) : "—",
-        Supplier: p.supplierName || "—",
-      }));
+  function getReportLabel() {
+    return REPORT_TYPES.find((r) => r.id === reportType)?.label || "Report";
+  }
+
+  function getSelectedFilters() {
+    return {
+      report: getReportLabel(),
+      store: filterStore ? getStoreName(filterStore) : "All Stores",
+      from: dateFrom || "All dates",
+      to: dateTo || "All dates",
+    };
+  }
+
+  function getSummaryRows() {
+    if (summary?.totalMovements !== undefined) {
+      return [
+        ["Total Movements", summary.totalMovements],
+        ["Qty Received", summary.totalReceived],
+        ["Qty Issued", summary.totalIssued],
+        ["Value In", `GH₵ ${summary.totalValueIn.toLocaleString("en-GH", { minimumFractionDigits: 2 })}`],
+        ["Value Out", `GH₵ ${summary.totalValueOut.toLocaleString("en-GH", { minimumFractionDigits: 2 })}`],
+        ["Net Value", `GH₵ ${summary.netValue.toLocaleString("en-GH", { minimumFractionDigits: 2 })}`],
+      ];
     }
-    const ws = XLSX.utils.json_to_sheet(rows);
+    if (summary?.totalProducts !== undefined) {
+      return [
+        ["Products", summary.totalProducts],
+        ["Total Qty", summary.totalQty.toLocaleString()],
+        ["Total Value", `GH₵ ${summary.totalValue.toLocaleString("en-GH", { minimumFractionDigits: 2 })}`],
+      ];
+    }
+    return [];
+  }
+
+  function getDetailExportShape() {
+    const movementMode = !["stock-balance", "low-stock", "expiry"].includes(reportType);
+
+    if (movementMode) {
+      const rows = data.map((m) => ([
+        formatDate(m.createdAt),
+        m.type,
+        getStoreName(m.storeId),
+        m.productName,
+        m.quantity,
+        m.unit,
+        m.unitCost?.toFixed(2) || "0.00",
+        (m.totalCost || 0).toFixed(2),
+        m.referenceNumber || "—",
+        m.recipientName || m.supplierName || m.fromStoreName || m.toStoreName || "—",
+        m.performedByName || "—",
+        m.note || "—",
+        m.status || "—",
+      ]));
+
+      return {
+        headers: [
+          "Date", "Type", "Store", "Product", "Qty", "Unit", "Unit Cost",
+          "Total Cost", "Ref #", "Party", "By", "Note", "Status",
+        ],
+        rows,
+        widths: [26, 18, 28, 36, 14, 14, 20, 20, 22, 34, 28, 40, 18],
+      };
+    }
+
+    const rows = data.map((p) => ([
+      p.productName,
+      getStoreName(p.storeId),
+      p.categoryId || "—",
+      p.quantityOnHand,
+      p.unit,
+      (p.unitCost || 0).toFixed(2),
+      (p.totalValue || 0).toFixed(2),
+      p.reorderLevel || "—",
+      p.batchNumber || "—",
+      p.expiryDate ? formatDate(p.expiryDate) : "—",
+      p.supplierName || "—",
+    ]));
+
+    return {
+      headers: [
+        "Product", "Store", "Category", "Qty", "Unit", "Unit Cost",
+        "Total Value", "Reorder Level", "Batch", "Expiry", "Supplier",
+      ],
+      rows,
+      widths: [42, 26, 22, 14, 14, 18, 22, 20, 18, 24, 28],
+    };
+  }
+
+  function exportExcelDocument() {
+    if (data.length === 0) return;
+    const { report, store, from, to } = getSelectedFilters();
+    const summaryRows = getSummaryRows();
+    const { headers, rows, widths } = getDetailExportShape();
+
+    const summarySheet = XLSX.utils.aoa_to_sheet([
+      ["Mayrit Cuisines Inventory Report"],
+      ["Report", report],
+      ["Store", store],
+      ["From", from],
+      ["To", to],
+      ["Generated", new Date().toLocaleString()],
+      [],
+      ["Summary", "Value"],
+      ...summaryRows,
+      [],
+      ["Records", data.length],
+    ]);
+    summarySheet["!cols"] = [{ wch: 24 }, { wch: 34 }];
+
+    const detailSheet = XLSX.utils.json_to_sheet(rows.map((row) => {
+      const obj = {};
+      headers.forEach((header, index) => {
+        obj[header] = row[index];
+      });
+      return obj;
+    }));
+    detailSheet["!cols"] = widths.map((width) => ({ wch: width }));
+
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Report");
+    XLSX.utils.book_append_sheet(wb, summarySheet, "Summary");
+    XLSX.utils.book_append_sheet(wb, detailSheet, "Details");
     XLSX.writeFile(wb, `Mayrit_${reportType}_${new Date().toISOString().split("T")[0]}.xlsx`);
   }
 
-  function exportPDF() {
+  function exportPDFDocument() {
     if (data.length === 0) return;
     const doc = new jsPDF("landscape");
-    const label = REPORT_TYPES.find((r) => r.id === reportType)?.label;
-    doc.setFontSize(16);
-    doc.text(`Mayrit Cuisines - ${label}`, 14, 20);
+    const label = getReportLabel();
+    const { report, store, from, to } = getSelectedFilters();
+    const summaryRows = getSummaryRows();
+    const { headers, rows, widths } = getDetailExportShape();
+    const generatedAt = new Date().toLocaleString();
+
+    doc.setFillColor(255, 255, 255);
+    doc.rect(0, 0, 297, 210, "F");
+    doc.setTextColor(15, 23, 42);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(18);
+    doc.text("Mayrit Cuisines", 14, 18);
+    doc.setFontSize(14);
+    doc.text(label, 14, 27);
+    doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
     doc.setTextColor(100);
-    doc.text(`Generated: ${new Date().toLocaleDateString()}  |  Records: ${data.length}`, 14, 30);
-    if (summary) {
-      doc.text(`Summary: ${JSON.stringify(summary).replace(/[{}"]/g, "")}`, 14, 38);
-    }
+    doc.text(`Generated: ${generatedAt}`, 14, 35);
+    doc.text(`Report: ${report}`, 14, 41);
+    doc.text(`Store: ${store}`, 14, 47);
+    doc.text(`Date range: ${from} to ${to}`, 14, 53);
+
+    autoTable(doc, {
+      startY: 60,
+      head: [["Metric", "Value"]],
+      body: summaryRows.length > 0 ? summaryRows : [["Records", String(data.length)]],
+      theme: "grid",
+      styles: {
+        font: "helvetica",
+        fontSize: 9,
+        cellPadding: 2.5,
+        lineColor: [226, 232, 240],
+        textColor: [15, 23, 42],
+      },
+      headStyles: {
+        fillColor: [234, 88, 12],
+        textColor: [255, 255, 255],
+        fontStyle: "bold",
+      },
+      columnStyles: {
+        0: { cellWidth: 54 },
+        1: { cellWidth: 64 },
+      },
+      margin: { left: 14, right: 14 },
+    });
+
+    autoTable(doc, {
+      startY: doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : 75,
+      head: [headers],
+      body: rows.slice(0, 1000),
+      theme: "striped",
+      styles: {
+        font: "helvetica",
+        fontSize: 7.5,
+        cellPadding: 2,
+        lineColor: [226, 232, 240],
+        textColor: [15, 23, 42],
+        overflow: "linebreak",
+      },
+      headStyles: {
+        fillColor: [15, 23, 42],
+        textColor: [255, 255, 255],
+        fontStyle: "bold",
+      },
+      alternateRowStyles: { fillColor: [249, 250, 251] },
+      columnStyles: widths.reduce((acc, width, idx) => {
+        acc[idx] = { cellWidth: Math.max(12, Math.min(width, 40)) };
+        return acc;
+      }, {}),
+      margin: { left: 14, right: 14 },
+      didDrawPage: () => {
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const pageNum = doc.internal.getNumberOfPages();
+        doc.setFontSize(9);
+        doc.setTextColor(148);
+        doc.text("Mayrit Cuisines inventory report", 14, pageHeight - 8);
+        doc.text(`Page ${pageNum}`, 265, pageHeight - 8);
+      },
+    });
+
     doc.save(`Mayrit_${reportType}_${new Date().toISOString().split("T")[0]}.pdf`);
   }
 
@@ -356,14 +507,14 @@ export default function ReportsPage() {
             <span className="text-sm text-gray-500">{data.length} records found</span>
             <div className="flex gap-2">
               <button
-                onClick={exportExcel}
+                onClick={exportExcelDocument}
                 className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors"
               >
                 <Download size={14} />
                 Excel
               </button>
               <button
-                onClick={exportPDF}
+                onClick={exportPDFDocument}
                 className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-700 transition-colors"
               >
                 <Download size={14} />
@@ -468,4 +619,6 @@ export default function ReportsPage() {
     </Layout>
   );
 }
+
+
 

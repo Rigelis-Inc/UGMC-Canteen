@@ -1,0 +1,29 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "mealMenus",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "dayOfWeek", "order": "ASCENDING" },
+        { "fieldPath": "mealPeriod", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "wardMealOrders",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "orderDate", "order": "DESCENDING" },
+        { "fieldPath": "requestedAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "wardMealOrders",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "orderDate", "order": "ASCENDING" },
+        { "fieldPath": "requestedAt", "order": "ASCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

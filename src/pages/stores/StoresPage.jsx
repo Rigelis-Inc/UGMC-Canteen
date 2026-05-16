@@ -4,7 +4,7 @@ import { collection, getDocs, query, where, addDoc, doc, updateDoc, serverTimest
 import { db } from "../../config/firebase";
 import { useAuth } from "../../contexts/AuthContext";
 import { hasPermission } from "../../lib/permissions";
-import { Package, AlertTriangle, ArrowRight, Warehouse, TrendingDown, Plus, X, Loader2, Pencil } from "lucide-react";
+import { Warehouse, ArrowRight, Plus, X, Loader2, Pencil } from "lucide-react";
 import Layout from "../../components/layout/Layout";
 
 export default function StoresPage() {
@@ -22,11 +22,11 @@ export default function StoresPage() {
   async function fetchStores() {
     try {
       const storesSnap = await getDocs(collection(db, "stores"));
-      const storesData = storesSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+      const storesData = storesSnap.docs.map((storeDoc) => ({ id: storeDoc.id, ...storeDoc.data() }));
 
       const filteredStores =
         assignedStores.length > 0 && !["SUPER_ADMIN", "ADMIN"].includes(userProfile?.role)
-          ? storesData.filter((s) => assignedStores.includes(s.id))
+          ? storesData.filter((store) => assignedStores.includes(store.id))
           : storesData;
 
       const storeStats = await Promise.all(
@@ -36,12 +36,14 @@ export default function StoresPage() {
           let lowStock = 0;
           let outOfStock = 0;
           let totalValue = 0;
-          spSnap.forEach((doc) => {
-            const data = doc.data();
+
+          spSnap.forEach((productDoc) => {
+            const data = productDoc.data();
             if (data.quantityOnHand <= 0) outOfStock++;
             else if (data.reorderLevel && data.quantityOnHand <= data.reorderLevel) lowStock++;
             totalValue += data.totalValue || 0;
           });
+
           return { ...store, productCount: spSnap.size, lowStock, outOfStock, totalValue };
         })
       );
@@ -131,7 +133,11 @@ export default function StoresPage() {
         </div>
         {canManage && (
           <button
-            onClick={() => { setShowModal(true); setFormError(""); setForm({ name: "", description: "", code: "" }); }}
+            onClick={() => {
+              setShowModal(true);
+              setFormError("");
+              setForm({ name: "", description: "", code: "" });
+            }}
             className="flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 transition-colors"
           >
             <Plus size={15} />
@@ -141,96 +147,266 @@ export default function StoresPage() {
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div className="rounded-xl border border-gray-200 bg-white overflow-hidden animate-pulse">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="bg-white rounded-lg border border-gray-200 p-5 animate-pulse">
-              <div className="flex items-center gap-3 mb-5">
-                <div className="w-10 h-10 bg-gray-100 rounded-lg"></div>
-                <div className="flex-1">
-                  <div className="h-4 bg-gray-100 rounded w-28 mb-1.5"></div>
-                  <div className="h-3 bg-gray-100 rounded w-20"></div>
-                </div>
+            <div key={i} className="flex items-center gap-4 px-5 py-4 border-b border-gray-100 last:border-b-0">
+              <div className="h-10 w-10 rounded-lg bg-gray-100 flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <div className="h-4 bg-gray-100 rounded w-44 mb-2" />
+                <div className="h-3 bg-gray-100 rounded w-28" />
               </div>
-              <div className="grid grid-cols-3 gap-3">
-                {Array.from({ length: 3 }).map((_, j) => (
-                  <div key={j} className="h-14 bg-gray-50 rounded-md"></div>
+              <div className="hidden md:grid flex-1 max-w-2xl grid-cols-3 gap-3">
+                {Array.from({ length: 3 }).map((__, j) => (
+                  <div key={j} className="h-12 bg-gray-50 rounded-md" />
                 ))}
               </div>
+              <div className="hidden lg:block h-4 w-24 bg-gray-100 rounded" />
             </div>
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-2 gap-5 animate-fadeIn">
-          {stores.map((store) => (
-            <Link
-              key={store.id}
-              to={`/admin/stores/${store.id}`}
-              className="group bg-white rounded-lg border border-gray-200 hover:border-gray-300 hover:shadow-sm transition-all duration-150"
-            >
-              <div className="p-5">
-                <div className="flex items-start justify-between mb-5">
-                  <div className="flex items-start gap-3.5">
-                    <div className="w-11 h-11 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <Warehouse size={20} className="text-gray-500" />
-                    </div>
-                    <div>
-                      <h2 className="text-xl font-bold text-gray-900 tracking-tight group-hover:text-gray-700 transition-colors">
-                        {store.name}
-                      </h2>
-                      <p className="text-xs text-gray-400 mt-1">{store.description || store.code}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {canManage && (
-                      <button
-                        onClick={(e) => openEditModal(e, store)}
-                        className="rounded-lg p-1.5 text-gray-300 hover:text-primary-600 hover:bg-primary-50 transition-colors"
-                        title="Edit store"
+        <div className="animate-fadeIn overflow-hidden rounded-xl border border-gray-200 bg-white">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-100">
+              <thead className="bg-gray-50/80">
+                <tr>
+                  <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-500">Store</th>
+                  <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-500">Code</th>
+                  <th className="px-5 py-3 text-center text-[11px] font-semibold uppercase tracking-wider text-gray-500">Products</th>
+                  <th className="px-5 py-3 text-center text-[11px] font-semibold uppercase tracking-wider text-gray-500">Low Stock</th>
+                  <th className="px-5 py-3 text-center text-[11px] font-semibold uppercase tracking-wider text-gray-500">Out of Stock</th>
+                  <th className="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-gray-500">Total Value</th>
+                  <th className="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-gray-500">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {stores.map((store) => (
+                  <tr key={store.id} className="hover:bg-gray-50/60 transition-colors">
+                    <td className="px-5 py-4">
+                      <Link to={`/admin/stores/${store.id}`} className="flex items-center gap-3 group">
+                        <div className="h-10 w-10 flex-shrink-0 rounded-lg border border-gray-200 bg-gray-50 flex items-center justify-center">
+                          <Warehouse size={18} className="text-gray-500" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-semibold text-gray-900 group-hover:text-primary-700 transition-colors truncate">{store.name}</p>
+                          <p className="text-xs text-gray-400 truncate">{store.description || "No description"}</p>
+                        </div>
+                      </Link>
+                    </td>
+                    <td className="px-5 py-4 text-sm text-gray-500">{store.code}</td>
+                    <td className="px-5 py-4 text-center">
+                      <span className="inline-flex min-w-10 justify-center rounded-full bg-gray-50 px-2.5 py-1 text-sm font-semibold text-gray-900">
+                        {store.productCount}
+                      </span>
+                    </td>
+                    <td className="px-5 py-4 text-center">
+                      <span
+                        className={`inline-flex min-w-10 justify-center rounded-full px-2.5 py-1 text-sm font-semibold ${
+                          store.lowStock > 0 ? "bg-amber-50 text-amber-700" : "bg-gray-50 text-gray-400"
+                        }`}
                       >
-                        <Pencil size={14} />
-                      </button>
-                    )}
-                    <ArrowRight size={16} className="text-gray-300 group-hover:text-gray-500 group-hover:translate-x-0.5 transition-all mt-0.5" />
-                  </div>
-                </div>
+                        {store.lowStock}
+                      </span>
+                    </td>
+                    <td className="px-5 py-4 text-center">
+                      <span
+                        className={`inline-flex min-w-10 justify-center rounded-full px-2.5 py-1 text-sm font-semibold ${
+                          store.outOfStock > 0 ? "bg-red-50 text-red-700" : "bg-gray-50 text-gray-400"
+                        }`}
+                      >
+                        {store.outOfStock}
+                      </span>
+                    </td>
+                    <td className="px-5 py-4 text-right text-sm font-semibold text-gray-900">
+                      GH₵ {store.totalValue.toLocaleString("en-GH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </td>
+                    <td className="px-5 py-4 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        {canManage && (
+                          <button
+                            onClick={(e) => openEditModal(e, store)}
+                            className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-gray-500 hover:text-primary-600 hover:bg-primary-50 transition-colors"
+                            title="Edit store"
+                          >
+                            Edit
+                          </button>
+                        )}
+                        <Link
+                          to={`/admin/stores/${store.id}`}
+                          className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+                        >
+                          View <ArrowRight size={13} />
+                        </Link>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="rounded-md bg-gray-50 border border-gray-100 p-2">
-                    <div className="flex items-center gap-1 mb-1">
-                      <Package size={11} className="text-gray-400" />
-                      <span className="text-[10px] text-gray-500 font-medium">Products</span>
-                    </div>
-                    <p className="text-sm font-bold text-gray-900">{store.productCount}</p>
-                  </div>
-                  <div className="rounded-md bg-amber-50/60 border border-amber-100/60 p-2">
-                    <div className="flex items-center gap-1 mb-1">
-                      <TrendingDown size={11} className="text-amber-500" />
-                      <span className="text-[10px] text-amber-600 font-medium">Low Stock</span>
-                    </div>
-                    <p className={`text-sm font-bold ${store.lowStock > 0 ? "text-amber-600" : "text-gray-400"}`}>
-                      {store.lowStock}
-                    </p>
-                  </div>
-                  <div className="rounded-md bg-red-50/60 border border-red-100/60 p-2">
-                    <div className="flex items-center gap-1 mb-1">
-                      <AlertTriangle size={11} className="text-red-400" />
-                      <span className="text-[10px] text-red-500 font-medium">Out of Stock</span>
-                    </div>
-                    <p className={`text-sm font-bold ${store.outOfStock > 0 ? "text-red-600" : "text-gray-400"}`}>
-                      {store.outOfStock}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between">
-                  <span className="text-xs text-gray-400">Total Value</span>
-                  <span className="text-xs font-semibold text-gray-700">
-                    GH₵ {store.totalValue.toLocaleString("en-GH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </span>
-                </div>
+      {editingStore && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fadeIn"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) setEditingStore(null);
+          }}
+        >
+          <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-gray-100 px-6 py-5">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">Edit Store</h2>
+                <p className="text-sm text-gray-500 mt-0.5">Update details for {editingStore.name}</p>
               </div>
-            </Link>
-          ))}
+              <button
+                onClick={() => setEditingStore(null)}
+                className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <form onSubmit={handleEditStore} className="px-6 py-5 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Store Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Description</label>
+                <textarea
+                  value={form.description}
+                  onChange={(e) => setForm({ ...form, description: e.target.value })}
+                  className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50 min-h-[88px]"
+                  rows={3}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Code</label>
+                <input
+                  type="text"
+                  value={form.code}
+                  onChange={(e) => setForm({ ...form, code: e.target.value })}
+                  className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50"
+                />
+              </div>
+
+              {formError && <p className="text-sm text-red-600">{formError}</p>}
+
+              <div className="flex gap-3 pt-4 border-t border-gray-100">
+                <button
+                  type="button"
+                  onClick={() => setEditingStore(null)}
+                  className="flex-1 px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="flex-1 px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-semibold disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+                >
+                  {saving ? (
+                    <>
+                      <Loader2 size={14} className="animate-spin" /> Saving…
+                    </>
+                  ) : (
+                    "Save Changes"
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fadeIn"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) setShowModal(false);
+          }}
+        >
+          <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-gray-100 px-6 py-5">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">Add Store</h2>
+                <p className="text-sm text-gray-500 mt-0.5">Create a new inventory store</p>
+              </div>
+              <button
+                onClick={() => setShowModal(false)}
+                className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <form onSubmit={handleCreateStore} className="px-6 py-5 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Store Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Description</label>
+                <textarea
+                  value={form.description}
+                  onChange={(e) => setForm({ ...form, description: e.target.value })}
+                  className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50 min-h-[88px]"
+                  rows={3}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Code</label>
+                <input
+                  type="text"
+                  value={form.code}
+                  onChange={(e) => setForm({ ...form, code: e.target.value })}
+                  className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-gray-50/50"
+                  placeholder="Optional"
+                />
+              </div>
+
+              {formError && <p className="text-sm text-red-600">{formError}</p>}
+
+              <div className="flex gap-3 pt-4 border-t border-gray-100">
+                <button
+                  type="button"
+                  onClick={() => setShowModal(false)}
+                  className="flex-1 px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="flex-1 px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-semibold disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+                >
+                  {saving ? (
+                    <>
+                      <Loader2 size={14} className="animate-spin" /> Creating…
+                    </>
+                  ) : (
+                    "Create Store"
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 

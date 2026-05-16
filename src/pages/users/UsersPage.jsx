@@ -7,6 +7,8 @@ import Layout from "../../components/layout/Layout";
 
 const ROLES = ["SUPER_ADMIN", "ADMIN", "STORE_MANAGER", "STORE_OFFICER", "SUPERVISOR", "AUDITOR"];
 
+const MEAL_ROLES = new Set(["NURSE", "KITCHEN_STAFF"]);
+
 export default function UsersPage() {
   const [users, setUsers] = useState([]);
   const [stores, setStores] = useState([]);
@@ -20,7 +22,8 @@ export default function UsersPage() {
         getDocs(collection(db, "users")),
         getDocs(collection(db, "stores")),
       ]);
-      setUsers(usersSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
+      // Exclude meal-only roles — they are managed in Meal Ordering > Staff
+      setUsers(usersSnap.docs.map((d) => ({ id: d.id, ...d.data() })).filter((u) => !MEAL_ROLES.has(u.role)));
       setStores(storesSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
       setLoading(false);
     }
@@ -39,6 +42,8 @@ export default function UsersPage() {
     STORE_OFFICER: "bg-green-100 text-green-700",
     SUPERVISOR: "bg-violet-100 text-violet-700",
     AUDITOR: "bg-gray-100 text-gray-700",
+    NURSE: "bg-blue-100 text-blue-700",
+    KITCHEN_STAFF: "bg-amber-100 text-amber-700",
   };
 
   return (
@@ -167,6 +172,7 @@ function AddUserModal({ stores, onClose }) {
         phone: formData.phone,
         role: formData.role,
         assignedStores: formData.assignedStores,
+        assignedWards: [],
         isActive: true,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),

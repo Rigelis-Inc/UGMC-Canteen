@@ -1,6 +1,7 @@
 import { lazy, Suspense } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import ProtectedRoute from "./components/common/ProtectedRoute";
+import { APP_PATHS } from "./lib/routes";
 
 const DashboardPage = lazy(() => import("./pages/dashboard/DashboardPage"));
 const StoresPage = lazy(() => import("./pages/stores/StoresPage"));
@@ -71,46 +72,11 @@ export default function AppShell() {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="stock/receive"
-          element={
-            <ProtectedRoute requiredPermission="receiveStock">
-              <ReceiveStockPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="stock/issue"
-          element={
-            <ProtectedRoute requiredPermission="issueStock">
-              <IssueStockPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="stock/transfer"
-          element={
-            <ProtectedRoute requiredPermission="transferStock">
-              <TransferStockPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="stock/adjust"
-          element={
-            <ProtectedRoute requiredPermission="adjustStock">
-              <AdjustStockPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="stock/damage-expiry"
-          element={
-            <ProtectedRoute requiredPermission="adjustStock">
-              <DamageExpiryPage />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="stock/receive" element={<ProtectedRoute requiredPermission="receiveStock"><ReceiveStockPage /></ProtectedRoute>} />
+        <Route path="stock/issue" element={<ProtectedRoute requiredPermission="issueStock"><IssueStockPage /></ProtectedRoute>} />
+        <Route path="stock/transfer" element={<ProtectedRoute requiredPermission="transferStock"><TransferStockPage /></ProtectedRoute>} />
+        <Route path="stock/adjust" element={<ProtectedRoute requiredPermission="adjustStock"><AdjustStockPage /></ProtectedRoute>} />
+        <Route path="stock/damage-expiry" element={<ProtectedRoute requiredPermission="adjustStock"><DamageExpiryPage /></ProtectedRoute>} />
         <Route
           path="stock-movements"
           element={
@@ -169,49 +135,17 @@ export default function AppShell() {
             </ProtectedRoute>
           }
         />
-        {/* Food Ordering (resolved under /admin/*, no conflict with public /menu) */}
-        <Route
-          path="menu"
-          element={
-            <ProtectedRoute requiredPermission="manageMenuItems">
-              <MenuManagementPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="orders"
-          element={
-            <ProtectedRoute requiredPermission="manageFoodOrders">
-              <OrdersPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="orders/:orderId"
-          element={
-            <ProtectedRoute requiredPermission="manageFoodOrders">
-              <OrderDetailPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="order-settings"
-          element={
-            <ProtectedRoute requiredPermission="manageOrderSettings">
-              <OrderSettingsPage />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="meal-staff" element={<Navigate to={APP_PATHS.kitchen.staff} replace />} />
+        <Route path="meal-settings" element={<Navigate to={APP_PATHS.kitchen.settings} replace />} />
 
-        {/* Legacy path redirects */}
-        <Route path="receive-stock" element={<Navigate to="/admin/stock/receive" replace />} />
-        <Route path="issue-stock" element={<Navigate to="/admin/stock/issue" replace />} />
-        <Route path="transfer-stock" element={<Navigate to="/admin/stock/transfer" replace />} />
-        <Route path="adjust-stock" element={<Navigate to="/admin/stock/adjust" replace />} />
-        <Route path="damage-expiry" element={<Navigate to="/admin/stock/damage-expiry" replace />} />
+        <Route path="receive-stock" element={<Navigate to={APP_PATHS.adminStock.receive} replace />} />
+        <Route path="issue-stock" element={<Navigate to={APP_PATHS.adminStock.issue} replace />} />
+        <Route path="transfer-stock" element={<Navigate to={APP_PATHS.adminStock.transfer} replace />} />
+        <Route path="adjust-stock" element={<Navigate to={APP_PATHS.adminStock.adjust} replace />} />
+        <Route path="damage-expiry" element={<Navigate to={APP_PATHS.adminStock.damageExpiry} replace />} />
 
-        <Route index element={<Navigate to="/admin/dashboard" replace />} />
-        <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
+        <Route index element={<Navigate to={APP_PATHS.adminHome} replace />} />
+        <Route path="*" element={<Navigate to={APP_PATHS.adminHome} replace />} />
       </Routes>
     </Suspense>
   );

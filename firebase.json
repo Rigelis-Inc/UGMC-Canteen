@@ -1,6 +1,10 @@
 {
+  "functions": {
+    "source": "functions"
+  },
   "firestore": {
-    "rules": "firestore.rules"
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
   },
   "storage": {
     "rules": "storage.rules"
@@ -9,6 +13,10 @@
     "public": "dist",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "rewrites": [
+      {
+        "source": "/api/sms/delivered",
+        "function": "sendDeliveredMealSms"
+      },
       {
         "source": "**",
         "destination": "/index.html"

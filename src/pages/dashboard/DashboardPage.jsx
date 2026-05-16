@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
-import { collection, query, where, getDocs, orderBy, limit, onSnapshot } from "firebase/firestore";
+import { Link } from "react-router-dom";
+import { collection, query, where, getDocs, orderBy, limit } from "firebase/firestore";
 import { db } from "../../config/firebase";
 import { useAuth } from "../../contexts/AuthContext";
 import Layout from "../../components/layout/Layout";
-import { Link } from "react-router-dom";
 import {
   Warehouse,
   Package,
@@ -16,9 +16,8 @@ import {
   TrendingUp,
   TrendingDown,
   Calendar,
-  UtensilsCrossed,
+  ChefHat,
   ArrowRight,
-  Bell,
 } from "lucide-react";
 
 export default function DashboardPage() {
@@ -113,7 +112,7 @@ export default function DashboardPage() {
   }, [userProfile, assignedStores]);
 
   const primaryStats = [
-    { label: "Total Products", value: stats.totalProducts, icon: Package, color: "from-primary-500 to-primary-600", bgLight: "bg-primary-50", textColor: "text-primary-600" },
+    { label: "Total Products", value: stats.totalProducts, icon: Package, color: "from-blue-500 to-blue-600", bgLight: "bg-blue-50", textColor: "text-blue-600" },
     { label: "Stock Value", value: `GH₵ ${stats.totalValue.toLocaleString("en-GH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, icon: DollarSign, color: "from-emerald-500 to-emerald-600", bgLight: "bg-emerald-50", textColor: "text-emerald-600" },
     { label: "Total Stores", value: stats.totalStores, icon: Warehouse, color: "from-violet-500 to-violet-600", bgLight: "bg-violet-50", textColor: "text-violet-600" },
     { label: "Suppliers", value: stats.totalSuppliers, icon: Truck, color: "from-amber-500 to-amber-600", bgLight: "bg-amber-50", textColor: "text-amber-600" },
@@ -127,12 +126,12 @@ export default function DashboardPage() {
 
   const activityStats = [
     { label: "Receipts (Month)", value: stats.receiptsThisMonth, icon: ArrowDownToLine, color: "text-green-600", bgColor: "bg-green-50" },
-    { label: "Issues (Month)", value: stats.issuesThisMonth, icon: ArrowUpToLine, color: "text-primary-600", bgColor: "bg-primary-50" },
+    { label: "Issues (Month)", value: stats.issuesThisMonth, icon: ArrowUpToLine, color: "text-blue-600", bgColor: "bg-blue-50" },
   ];
 
   const typeConfig = {
     RECEIVE: { bg: "bg-green-100", text: "text-green-700", dot: "bg-green-500", icon: ArrowDownToLine },
-    ISSUE: { bg: "bg-primary-100", text: "text-primary-700", dot: "bg-primary-500", icon: ArrowUpToLine },
+    ISSUE: { bg: "bg-blue-100", text: "text-blue-700", dot: "bg-blue-500", icon: ArrowUpToLine },
     TRANSFER: { bg: "bg-purple-100", text: "text-purple-700", dot: "bg-purple-500" },
     ADJUSTMENT: { bg: "bg-amber-100", text: "text-amber-700", dot: "bg-amber-500" },
     DAMAGE: { bg: "bg-red-100", text: "text-red-700", dot: "bg-red-500" },
@@ -216,16 +215,16 @@ export default function DashboardPage() {
           </Link>
 
           {/* Primary stats */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
             {primaryStats.map((stat) => (
-              <div key={stat.label} className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-4 hover:shadow-sm hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-200">
-                <div className="flex items-start justify-between mb-2">
-                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400">{stat.label}</p>
-                  <div className={`p-1.5 rounded-md bg-gradient-to-br ${stat.color} shadow-sm`}>
-                    <stat.icon size={14} className="text-white" />
+              <div key={stat.label} className="bg-white rounded-lg border border-gray-200 px-3 py-3 hover:border-gray-300 transition-all duration-200">
+                <div className="flex items-start justify-between mb-1.5">
+                  <p className="text-[11px] font-medium text-gray-500 leading-tight">{stat.label}</p>
+                  <div className={`p-1 rounded-md bg-gradient-to-br ${stat.color} shadow-sm`}>
+                    <stat.icon size={12} className="text-white" />
                   </div>
                 </div>
-                <p className="text-xl font-bold text-gray-900 dark:text-white tracking-tight leading-none">{stat.value}</p>
+                <p className="text-[18px] font-bold text-gray-900 tracking-tight leading-none">{stat.value}</p>
               </div>
             ))}
           </div>
@@ -314,6 +313,22 @@ export default function DashboardPage() {
                   ))}
                 </div>
               </div>
+              {/* Kitchen Portal Bridge — admins only */}
+              {["SUPER_ADMIN","ADMIN"].includes(userProfile?.role) && (
+                <Link
+                  to="/kitchen/dashboard"
+                  className="flex items-center gap-3 bg-primary-500 hover:bg-primary-600 text-white rounded-lg p-4 transition-colors shadow-sm"
+                >
+                  <div className="p-2 rounded-md bg-white/20">
+                    <ChefHat size={18} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold leading-tight">Kitchen Portal</p>
+                    <p className="text-xs opacity-80 mt-0.5">Manage ward meal orders</p>
+                  </div>
+                  <ArrowRight size={16} className="opacity-80 flex-shrink-0" />
+                </Link>
+              )}
             </div>
           </div>
         </div>

@@ -2,8 +2,7 @@ import { useState, useCallback, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { hasPermission } from "../../lib/permissions";
-import { collection, query, where, onSnapshot } from "firebase/firestore";
-import { db } from "../../config/firebase";
+import { APP_PATHS } from "../../lib/routes";
 import {
   LayoutDashboard,
   Warehouse,
@@ -17,7 +16,7 @@ import {
   BarChart3,
   ShieldCheck,
   Settings,
-  Globe,
+  ChefHat,
   LogOut,
   Menu,
   X,
@@ -26,13 +25,10 @@ import {
   Activity,
   ChevronDown,
   ChevronRight,
-  UtensilsCrossed,
-  ClipboardList,
-  ShoppingCart,
   SlidersHorizontal,
 } from "lucide-react";
 
-const DASHBOARD_PATH = "/admin/dashboard";
+const DASHBOARD_PATH = APP_PATHS.adminHome;
 
 const navGroups = [
   {
@@ -42,11 +38,11 @@ const navGroups = [
     items: [
       { label: "Stores", icon: Warehouse, path: "/admin/stores", permission: "viewDashboard" },
       { label: "Products", icon: Package, path: "/admin/products", permission: "manageProducts" },
-      { label: "Receive Stock", icon: ArrowDownToLine, path: "/admin/stock/receive", permission: "receiveStock" },
-      { label: "Issue Stock", icon: ArrowUpToLine, path: "/admin/stock/issue", permission: "issueStock" },
-      { label: "Transfer Stock", icon: ArrowUpDown, path: "/admin/stock/transfer", permission: "transferStock" },
-      { label: "Adjust Stock", icon: SlidersHorizontal, path: "/admin/stock/adjust", permission: "adjustStock" },
-      { label: "Damage / Expiry", icon: TriangleAlert, path: "/admin/stock/damage-expiry", permission: "adjustStock" },
+      { label: "Receive Stock", icon: ArrowDownToLine, path: APP_PATHS.adminStock.receive, permission: "receiveStock" },
+      { label: "Issue Stock", icon: ArrowUpToLine, path: APP_PATHS.adminStock.issue, permission: "issueStock" },
+      { label: "Transfer Stock", icon: ArrowUpDown, path: APP_PATHS.adminStock.transfer, permission: "transferStock" },
+      { label: "Adjust Stock", icon: SlidersHorizontal, path: APP_PATHS.adminStock.adjust, permission: "adjustStock" },
+      { label: "Damage / Expiry", icon: TriangleAlert, path: APP_PATHS.adminStock.damageExpiry, permission: "adjustStock" },
       { label: "Movements", icon: Activity, path: "/admin/stock-movements", permission: "viewReports" },
     ],
   },
@@ -68,16 +64,6 @@ const navGroups = [
       { label: "Audit Logs", icon: ShieldCheck, path: "/admin/audit-logs", permission: "viewAuditLogs" },
       { label: "Users", icon: Users, path: "/admin/users", permission: "manageUsers" },
       { label: "Settings", icon: Settings, path: "/admin/settings", permission: "manageSettings" },
-    ],
-  },
-  {
-    id: "food-ordering",
-    label: "Food Ordering",
-    icon: UtensilsCrossed,
-    items: [
-      { label: "Menu Items", icon: ShoppingCart, path: "/admin/menu", permission: "manageMenuItems" },
-      { label: "Orders", icon: ClipboardList, path: "/admin/orders", permission: "manageFoodOrders" },
-      { label: "Order Settings", icon: SlidersHorizontal, path: "/admin/order-settings", permission: "manageOrderSettings" },
     ],
   },
 ];
@@ -149,7 +135,7 @@ function NavGroup({ group, collapsed, isOpen, onToggle, location, onNav, badge }
           {group.items.map((item) => {
             const isActive =
               location.pathname === item.path ||
-              (item.path !== "/dashboard" && location.pathname.startsWith(item.path + "/"));
+              (item.path !== DASHBOARD_PATH && location.pathname.startsWith(item.path + "/"));
             return (
               <Link
                 key={item.path}
@@ -351,24 +337,24 @@ export default function Sidebar({ collapsed, onToggle }) {
 
           {/* User */}
           <div className="flex-shrink-0 border-t border-slate-800/50 p-3 space-y-2">
-            {/* Visit Website */}
+            {/* Kitchen Portal */}
             {collapsed ? (
               <div className="flex justify-center mb-1">
                 <Link
-                  to="/"
-                  title="Visit Website"
+                  to="/kitchen/dashboard"
+                  title="Kitchen Portal"
                   className="p-2 rounded-lg bg-primary-500/20 text-primary-400 hover:bg-primary-500/30 transition-all"
                 >
-                  <Globe size={16} />
+                  <ChefHat size={16} />
                 </Link>
               </div>
             ) : (
               <Link
-                to="/"
+                to="/kitchen/dashboard"
                 className="flex items-center gap-2.5 w-full px-3 py-2.5 rounded-xl text-[13px] font-semibold bg-primary-500/20 text-primary-300 hover:bg-primary-500/30 border border-primary-500/30 transition-all shadow-sm"
               >
-                <Globe size={15} className="flex-shrink-0" />
-                <span className="flex-1">Visit Website</span>
+                <ChefHat size={15} className="flex-shrink-0" />
+                <span className="flex-1">Kitchen Portal</span>
                 <span className="text-[10px] font-medium bg-primary-500/30 text-primary-300 px-1.5 py-0.5 rounded-md">↗</span>
               </Link>
             )}

@@ -3,7 +3,7 @@ import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
-const firebaseConfig = {
+export const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyBUEd99HG9M3ed2f22Rw2JF3ElHtgT4f2A",
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "ugmc-stores.firebaseapp.com",
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "ugmc-stores",

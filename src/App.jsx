@@ -1,17 +1,13 @@
 import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
-import { CartProvider } from "./contexts/CartContext";
+import AppErrorBoundary from "./components/common/AppErrorBoundary";
 
-const LoginPage = lazy(() => import("./pages/auth/LoginPage"));
+const NurseLoginPage = lazy(() => import("./pages/auth/NurseLoginPage"));
+const AdminLoginPage = lazy(() => import("./pages/auth/LoginPage"));
 const AppShell = lazy(() => import("./AppShell"));
-const PublicLayout = lazy(() => import("./components/public/PublicLayout"));
-const LandingPage = lazy(() => import("./pages/public/LandingPage"));
-const MenuPage = lazy(() => import("./pages/public/MenuPage"));
-const CartPage = lazy(() => import("./pages/public/CartPage"));
-const CheckoutPage = lazy(() => import("./pages/public/CheckoutPage"));
-const OrderConfirmationPage = lazy(() => import("./pages/public/OrderConfirmationPage"));
-const TrackOrderPage = lazy(() => import("./pages/public/TrackOrderPage"));
+const KitchenShell = lazy(() => import("./KitchenShell"));
+const NurseShell = lazy(() => import("./NurseShell"));
 
 function AppLoader() {
   return (
@@ -27,33 +23,32 @@ function AppLoader() {
 export default function App() {
   return (
     <AuthProvider>
-      <CartProvider>
-        <BrowserRouter>
+      <BrowserRouter>
+        <AppErrorBoundary>
           <Suspense fallback={<AppLoader />}>
             <Routes>
-              {/* Public routes */}
-              <Route element={<PublicLayout />}>
-                <Route index element={<LandingPage />} />
-                <Route path="/menu" element={<MenuPage />} />
-                <Route path="/cart" element={<CartPage />} />
-                <Route path="/checkout" element={<CheckoutPage />} />
-                <Route path="/order-confirmation/:orderId" element={<OrderConfirmationPage />} />
-                <Route path="/orders/:orderId?" element={<TrackOrderPage />} />
-                <Route path="/track-order/:orderId?" element={<Navigate to="/orders" replace />} />
-              </Route>
+              {/* Main entry - nurse / ward meal ordering */}
+              <Route path="/" element={<NurseLoginPage />} />
+              <Route path="/login" element={<NurseLoginPage />} />
 
-              {/* Admin routes */}
-              <Route path="/admin/login" element={<LoginPage />} />
+              {/* Admin / Inventory portal */}
+              <Route path="/admin/login" element={<AdminLoginPage />} />
               <Route path="/admin/*" element={<AppShell />} />
 
+              {/* Kitchen portal */}
+              <Route path="/kitchen" element={<Navigate to="/kitchen/dashboard" replace />} />
+              <Route path="/kitchen/*" element={<KitchenShell />} />
+
+              {/* Nurse ward-ordering routes */}
+              <Route path="/nurse/*" element={<NurseShell />} />
+
               {/* Legacy redirects */}
-              <Route path="/login" element={<Navigate to="/admin/login" replace />} />
-              <Route path="/dashboard" element={<Navigate to="/admin/dashboard" replace />} />
+              <Route path="/dashboard" element={<Navigate to="/nurse/dashboard" replace />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </Suspense>
-        </BrowserRouter>
-      </CartProvider>
+        </AppErrorBoundary>
+      </BrowserRouter>
     </AuthProvider>
   );
 }

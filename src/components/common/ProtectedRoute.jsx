@@ -1,6 +1,6 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
-import { hasPermission } from "../../lib/permissions";
+import { getRoleHomePath, hasPermission } from "../../lib/permissions";
 
 function GateLoader() {
   return (
@@ -62,7 +62,7 @@ export default function ProtectedRoute({ children, requiredPermission }) {
 
   if (requiredPermission) {
     if (!hasPermission(userProfile.role, requiredPermission)) {
-      return <Navigate to="/admin/dashboard" replace />;
+      return <Navigate to={getRoleHomePath(userProfile.role)} replace />;
     }
   }
 

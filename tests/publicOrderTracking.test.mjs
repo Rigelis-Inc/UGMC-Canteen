@@ -15,7 +15,6 @@ test("tracking steps are in correct order", () => {
     "CONFIRMED",
     "PREPARING",
     "READY",
-    "OUT_FOR_DELIVERY",
     "COMPLETED",
   ]);
 });
@@ -42,8 +41,7 @@ test("getTrackingStepIndex returns correct position", () => {
   assert.equal(getTrackingStepIndex("CONFIRMED"), 1);
   assert.equal(getTrackingStepIndex("PREPARING"), 2);
   assert.equal(getTrackingStepIndex("READY"), 3);
-  assert.equal(getTrackingStepIndex("OUT_FOR_DELIVERY"), 4);
-  assert.equal(getTrackingStepIndex("COMPLETED"), 5);
+  assert.equal(getTrackingStepIndex("COMPLETED"), 4);
   assert.equal(getTrackingStepIndex("UNKNOWN"), 0);
 });
 
@@ -116,7 +114,6 @@ test("isActiveCustomerOrderStatus returns correct values", () => {
   assert.equal(isActiveCustomerOrderStatus("CONFIRMED"), true);
   assert.equal(isActiveCustomerOrderStatus("PREPARING"), true);
   assert.equal(isActiveCustomerOrderStatus("READY"), true);
-  assert.equal(isActiveCustomerOrderStatus("OUT_FOR_DELIVERY"), true);
   assert.equal(isActiveCustomerOrderStatus("COMPLETED"), false);
   assert.equal(isActiveCustomerOrderStatus("CANCELLED"), false);
   assert.equal(isActiveCustomerOrderStatus(null), false);
