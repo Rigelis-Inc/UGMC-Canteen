@@ -6,10 +6,11 @@ import {
 import { db } from "../../config/firebase";
 import { useAuth } from "../../contexts/AuthContext";
 import { sendDeliveredMealSms } from "../../lib/mealSms";
+import SmsStatusBadge from "../../components/common/SmsStatusBadge";
 import { format, subDays } from "date-fns";
 import {
   AlertTriangle, X, ChevronLeft, ChevronRight, ChevronDown,
-  RefreshCw, Radio, Clock, Crown, Bell
+  RefreshCw, Radio, Clock, Crown, Bell, Send
 } from "lucide-react";
 
 const PERIODS = ["BREAKFAST", "LUNCH", "SUPPER"];
@@ -110,6 +111,7 @@ export default function MealOrdersPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [savingOrderId, setSavingOrderId] = useState(null);
   const [selected, setSelected] = useState(null);
+  const [bulkSmsResult, setBulkSmsResult] = useState(null);
   const [expandedWards, setExpandedWards] = useState(new Set());
   const [selectedIds, setSelectedIds] = useState(new Set());
 
@@ -242,16 +244,21 @@ export default function MealOrdersPage() {
       await Promise.all(logPromises);
 
       if (newStatus === "DELIVERED") {
+        const smsResults = { total: selectedIds.size, sent: 0, failed: 0 };
         await Promise.all(
           Array.from(selectedIds).map((id) => {
             const order = liveOrders.find((item) => item.id === id);
-            return order
-              ? sendDeliveredMealSms(db, { ...order, status: newStatus }).catch((smsError) => {
-                  console.warn("Failed to send delivered SMS:", smsError);
-                })
-              : Promise.resolve();
+            if (!order) return Promise.resolve();
+            return sendDeliveredMealSms(db, { ...order, status: newStatus })
+              .then(() => { smsResults.sent++; })
+              .catch((smsError) => {
+                smsResults.failed++;
+                console.warn("Failed to send delivered SMS:", smsError);
+              });
           })
         );
+        setBulkSmsResult(smsResults);
+        setTimeout(() => setBulkSmsResult(null), 8000);
       }
       
       setSelectedIds(new Set());
@@ -455,6 +462,34 @@ export default function MealOrdersPage() {
                   Clear
                 </button>
               </div>
+            </div>
+          )}
+
+          {/* Bulk SMS Result Banner */}
+          {bulkSmsResult && (
+            <div className={`flex items-center gap-3 rounded-lg px-4 py-2.5 border ${
+              bulkSmsResult.failed === 0
+                ? "bg-blue-50 border-blue-200"
+                : bulkSmsResult.sent === 0
+                  ? "bg-red-50 border-red-200"
+                  : "bg-amber-50 border-amber-200"
+            }`}>
+              <Send size={15} className={bulkSmsResult.failed === 0 ? "text-blue-600" : "text-amber-600"} />
+              <div>
+                <span className="text-xs font-medium">
+                  {bulkSmsResult.failed === 0
+                    ? `${bulkSmsResult.sent} SMS dispatched to NALO`
+                    : bulkSmsResult.sent === 0
+                      ? `SMS failed for all ${bulkSmsResult.failed} patient${bulkSmsResult.failed !== 1 ? "s" : ""}`
+                      : `${bulkSmsResult.sent} SMS dispatched, ${bulkSmsResult.failed} failed`}
+                </span>
+                {bulkSmsResult.failed === 0 && (
+                  <p className="text-[10px] text-blue-600 mt-0.5">Carrier delivery may take a moment — check SMS status in order details if needed.</p>
+                )}
+              </div>
+              <button onClick={() => setBulkSmsResult(null)} className="ml-auto p-0.5 rounded hover:bg-black/5">
+                <X size={12} />
+              </button>
             </div>
           )}
 
@@ -696,6 +731,20 @@ export default function MealOrdersPage() {
                 <div className="flex items-center gap-2 text-xs text-red-600">
                   <AlertTriangle size={12} />
                   <span className="font-medium">Late — {selected.lateReason?.replace("_", " ")}</span>
+                </div>
+              )}
+
+              {/* SMS Delivery Status */}
+              {selected.status === "DELIVERED" && (
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">SMS Notification</p>
+                  <SmsStatusBadge order={selected} onRetry={() => {
+                    setSelected(null);
+                    if (mode === "live") fetchLive(); else fetchHistory();
+                  }} />
+                  {selected.smsDeliveredError && selected.smsDeliveredStatus === "FAILED" && (
+                    <p className="text-[10px] text-red-500 mt-1">{selected.smsDeliveredError}</p>
+                  )}
                 </div>
               )}
             </div>

@@ -6,6 +6,7 @@ import {
 import { db } from "../../config/firebase";
 import { useAuth } from "../../contexts/AuthContext";
 import { sendDeliveredMealSms } from "../../lib/mealSms";
+import SmsStatusBadge from "../../components/common/SmsStatusBadge";
 import { format, subDays } from "date-fns";
 import { AlertTriangle, X, ChevronLeft, ChevronRight, Search, Filter, Clock, MapPin, UtensilsCrossed } from "lucide-react";
 
@@ -349,6 +350,14 @@ export default function KitchenOrdersPage() {
                   <span className="text-slate-800 font-medium text-right text-sm">{value}</span>
                 </div>
               ) : null)}
+              {selected.status === "DELIVERED" && (
+                <div className="pt-2 border-t border-slate-100">
+                  <SmsStatusBadge order={selected} onRetry={() => { setSelected(null); load(); }} />
+                  {selected.smsDeliveredError && selected.smsDeliveredStatus === "FAILED" && (
+                    <p className="text-[10px] text-red-500 mt-1">{selected.smsDeliveredError}</p>
+                  )}
+                </div>
+              )}
             </div>
             <div className="px-5 py-3 border-t border-slate-100 flex gap-2">
               {selected.status === "REQUESTED" && (

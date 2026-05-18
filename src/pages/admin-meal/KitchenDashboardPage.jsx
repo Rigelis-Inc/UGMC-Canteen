@@ -6,6 +6,7 @@ import {
 import { db } from "../../config/firebase";
 import { useAuth } from "../../contexts/AuthContext";
 import { sendDeliveredMealSms } from "../../lib/mealSms";
+import SmsStatusBadge from "../../components/common/SmsStatusBadge";
 import { format } from "date-fns";
 import {
   ChefHat, Clock, CheckCircle, Truck, AlertTriangle, ChevronDown,
@@ -327,6 +328,9 @@ function WardView({ wardGroups, onUpdate, onCancel }) {
                       {o.isLate && <p className="text-xs text-amber-600 flex items-center gap-1"><AlertTriangle size={10} /> Late: {o.lateReason?.replace("_"," ")}</p>}
                     </div>
                     <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${flow?.color || "bg-slate-100 text-slate-600"}`}>{o.status}</span>
+                    {o.status === "DELIVERED" && o.smsDeliveredStatus && (
+                      <SmsStatusBadge order={o} onRetry={() => fetchOrders()} size="xs" />
+                    )}
                     {flow?.next && (
                       <button onClick={() => onUpdate(o, flow.next)}
                         className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${flow.btnColor}`}>
