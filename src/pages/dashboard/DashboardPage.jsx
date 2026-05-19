@@ -18,6 +18,7 @@ import {
   Calendar,
   ChefHat,
   ArrowRight,
+  UtensilsCrossed,
 } from "lucide-react";
 
 export default function DashboardPage() {
