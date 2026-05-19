@@ -12,6 +12,11 @@ export const APP_PATHS = {
     adjust: "/admin/stock/adjust",
     damageExpiry: "/admin/stock/damage-expiry",
   },
+  adminCanteen: {
+    orders: "/admin/orders",
+    menu: "/admin/menu",
+    orderSettings: "/admin/order-settings",
+  },
   nurse: {
     dashboard: "/nurse/dashboard",
     patients: "/nurse/patients",

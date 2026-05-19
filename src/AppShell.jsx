@@ -135,6 +135,12 @@ export default function AppShell() {
             </ProtectedRoute>
           }
         />
+        {/* Canteen / Meal Orders */}
+        <Route path="orders" element={<ProtectedRoute requiredPermission="manageFoodOrders"><OrdersPage /></ProtectedRoute>} />
+        <Route path="orders/:id" element={<ProtectedRoute requiredPermission="manageFoodOrders"><OrderDetailPage /></ProtectedRoute>} />
+        <Route path="menu" element={<ProtectedRoute requiredPermission="manageMenuItems"><MenuManagementPage /></ProtectedRoute>} />
+        <Route path="order-settings" element={<ProtectedRoute requiredPermission="manageOrderSettings"><OrderSettingsPage /></ProtectedRoute>} />
+
         <Route path="meal-staff" element={<Navigate to={APP_PATHS.kitchen.staff} replace />} />
         <Route path="meal-settings" element={<Navigate to={APP_PATHS.kitchen.settings} replace />} />
 
