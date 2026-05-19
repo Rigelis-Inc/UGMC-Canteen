@@ -1,5 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { collection, query, where, onSnapshot } from "firebase/firestore";
+import { db } from "../../config/firebase";
 import { useAuth } from "../../contexts/AuthContext";
 import { hasPermission } from "../../lib/permissions";
 import { APP_PATHS } from "../../lib/routes";
@@ -26,6 +28,8 @@ import {
   ChevronDown,
   ChevronRight,
   SlidersHorizontal,
+  UtensilsCrossed,
+  ClipboardList,
 } from "lucide-react";
 
 const DASHBOARD_PATH = APP_PATHS.adminHome;
@@ -53,6 +57,16 @@ const navGroups = [
     items: [
       { label: "Suppliers", icon: Truck, path: "/admin/suppliers", permission: "manageSuppliers" },
       { label: "Recipients", icon: Users, path: "/admin/recipients", permission: "manageRecipients" },
+    ],
+  },
+  {
+    id: "canteen",
+    label: "Canteen",
+    icon: UtensilsCrossed,
+    items: [
+      { label: "Food Orders", icon: ClipboardList, path: "/admin/orders", permission: "manageFoodOrders" },
+      { label: "Menu Management", icon: UtensilsCrossed, path: "/admin/menu", permission: "manageMenuItems" },
+      { label: "Order Settings", icon: Settings, path: "/admin/order-settings", permission: "manageOrderSettings" },
     ],
   },
   {
