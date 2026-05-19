@@ -122,27 +122,62 @@ export const sendDeliveredMealSms = onRequest(
         return;
       }
 
-      const currentSmsStatus = cleanText(orderData.smsDeliveredStatus).toUpperCase();
-      if (currentSmsStatus === "SENT") {
-        jsonResponse(res, 200, { sent: true, alreadySent: true, orderId });
+      const claimed = await db.runTransaction(async (transaction) => {
+        const snap = await transaction.get(orderRef);
+        if (!snap.exists) {
+          return { claimed: false, reason: "NOT_FOUND" };
+        }
+
+        const data = snap.data() || {};
+        const currentSmsStatus = cleanText(data.smsDeliveredStatus).toUpperCase();
+
+        if (currentSmsStatus === "SENT") {
+          return { claimed: false, reason: "ALREADY_SENT" };
+        }
+
+        if (currentSmsStatus === "PROCESSING") {
+          return { claimed: false, reason: "PROCESSING" };
+        }
+
+        transaction.update(orderRef, {
+          smsDeliveredStatus: "PROCESSING",
+          smsDeliveredStartedAt: admin.firestore.FieldValue.serverTimestamp(),
+          smsDeliveredUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          smsDeliveredError: null,
+          smsDeliveredAttempts: admin.firestore.FieldValue.increment(1),
+        });
+
+        return { claimed: true, data };
+      });
+
+      if (!claimed.claimed) {
+        if (claimed.reason === "NOT_FOUND") {
+          jsonResponse(res, 404, { error: "Order not found." });
+          return;
+        }
+        if (claimed.reason === "ALREADY_SENT") {
+          jsonResponse(res, 200, { sent: true, alreadySent: true, orderId });
+          return;
+        }
+        if (claimed.reason === "PROCESSING") {
+          jsonResponse(res, 202, { sent: false, processing: true, orderId });
+          return;
+        }
+        jsonResponse(res, 500, { error: "Failed to claim SMS delivery." });
         return;
       }
 
-      if (currentSmsStatus === "PROCESSING") {
-        jsonResponse(res, 202, { sent: false, processing: true, orderId });
-        return;
-      }
-
+      const resolvedOrderData = claimed.data || {};
       const [settingsSnap, patientContact] = await Promise.all([
         db.doc("settings/mealOrdering").get(),
-        resolvePatientContact(db, orderData),
+        resolvePatientContact(db, resolvedOrderData),
       ]);
 
       const supportContactNumber = cleanText(
         settingsSnap.exists ? settingsSnap.data()?.supportContactNumber : ""
       ) || DEFAULT_SUPPORT_CONTACT;
       const phone = cleanText(patientContact.phone);
-      const patientName = cleanText(patientContact.patientName) || cleanText(orderData.patientName);
+      const patientName = cleanText(patientContact.patientName) || cleanText(resolvedOrderData.patientName);
 
       if (!phone) {
         await orderRef.update({
@@ -153,14 +188,6 @@ export const sendDeliveredMealSms = onRequest(
         jsonResponse(res, 400, { error: "Missing patient phone number." });
         return;
       }
-
-      await orderRef.update({
-        smsDeliveredStatus: "PROCESSING",
-        smsDeliveredStartedAt: admin.firestore.FieldValue.serverTimestamp(),
-        smsDeliveredUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
-        smsDeliveredError: null,
-        smsDeliveredAttempts: admin.firestore.FieldValue.increment(1),
-      });
 
       const message = buildDeliveredMessage({
         patientName,

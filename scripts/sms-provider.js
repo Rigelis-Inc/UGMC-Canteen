@@ -163,6 +163,27 @@ export function buildReslNaloRequestUrl({
   return url.toString();
 }
 
+function isNaloSuccessBody(body) {
+  if (!body) return true;
+
+  if (typeof body === "string") {
+    const trimmed = body.trim();
+    if (trimmed.startsWith("1701|")) return true;
+    const pipeCode = trimmed.split("|")[0];
+    if (pipeCode && pipeCode !== "1701") return false;
+    return true;
+  }
+
+  if (typeof body === "object") {
+    const code = body.code ?? body.status ?? body.statusCode ?? body.status_code;
+    if (code !== undefined && code !== null && String(code) !== "1701") return false;
+    if (body.error) return false;
+    if (body.success === false) return false;
+  }
+
+  return true;
+}
+
 export async function sendReslNaloSms({
   providerUrl,
   username,
@@ -218,6 +239,13 @@ export async function sendReslNaloSms({
       );
     }
 
+    if (!isNaloSuccessBody(body)) {
+      const bodyPreview = typeof body === "string" ? body : JSON.stringify(body);
+      throw new Error(
+        `SMS provider indicated delivery failure: ${bodyPreview.slice(0, 500)}`
+      );
+    }
+
     return {
       transport: "legacy-post",
       request: {
@@ -263,6 +291,13 @@ export async function sendReslNaloSms({
     const bodyPreview = typeof body === "string" ? body : JSON.stringify(body);
     throw new Error(
       `SMS provider responded with ${response.status} ${response.statusText}: ${bodyPreview.slice(0, 500)}`
+    );
+  }
+
+  if (!isNaloSuccessBody(body)) {
+    const bodyPreview = typeof body === "string" ? body : JSON.stringify(body);
+    throw new Error(
+      `SMS provider indicated delivery failure: ${bodyPreview.slice(0, 500)}`
     );
   }
 

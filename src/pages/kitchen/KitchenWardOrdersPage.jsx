@@ -7,6 +7,7 @@ import {
 import { db } from "../../config/firebase";
 import { useAuth } from "../../contexts/AuthContext";
 import { sendDeliveredMealSms } from "../../lib/mealSms";
+import SmsStatusBadge from "../../components/common/SmsStatusBadge";
 import { format } from "date-fns";
 import { AlertTriangle, ArrowLeft, Crown, RefreshCw, Eye } from "lucide-react";
 import { APP_PATHS } from "../../lib/routes";
@@ -347,6 +348,15 @@ export default function KitchenWardOrdersPage() {
                 <div className="flex items-center gap-2 text-xs text-red-600">
                   <AlertTriangle size={12} />
                   <span className="font-medium">Late — {selected.lateReason?.replace("_", " ")}</span>
+                </div>
+              )}
+              {selected.status === "DELIVERED" && (
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">SMS Notification</p>
+                  <SmsStatusBadge order={selected} onRetry={() => { setSelected(null); fetchOrders(); }} />
+                  {selected.smsDeliveredError && selected.smsDeliveredStatus === "FAILED" && (
+                    <p className="text-[10px] text-red-500 mt-1">{selected.smsDeliveredError}</p>
+                  )}
                 </div>
               )}
               {selected.requestedByName && (

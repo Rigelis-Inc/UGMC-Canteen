@@ -6,6 +6,7 @@ import {
 import { db } from "../../config/firebase";
 import { useAuth } from "../../contexts/AuthContext";
 import { sendDeliveredMealSms } from "../../lib/mealSms";
+import SmsStatusBadge from "../../components/common/SmsStatusBadge";
 import { format } from "date-fns";
 import {
   ChefHat, AlertTriangle, ChevronDown, BarChart2, RefreshCw,
@@ -164,6 +165,13 @@ function OrderCard({ order, onUpdate, onCancel }) {
           <div className="mt-2 text-[10px] text-slate-400 flex items-center gap-1">
             <Timer size={9} />
             {order.requestedAt?.seconds ? format(new Date(order.requestedAt.seconds * 1000), "HH:mm") : ""}
+          </div>
+        )}
+
+        {/* SMS Delivery Status */}
+        {order.status === "DELIVERED" && order.smsDeliveredStatus && (
+          <div className="mt-2 pt-2 border-t border-slate-100">
+            <SmsStatusBadge order={order} size="xs" />
           </div>
         )}
       </div>
